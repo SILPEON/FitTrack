@@ -50,16 +50,16 @@ const BACK: Region[] = [
   { m: null, d: 'M78,373 L90,373 L94,385 L73,385 Z', mirror: true },
 ];
 
-/** Colours for an intensity 0..1: deep wine red → vivid red-coral. */
+/** Colours for an intensity 0..1: light load = soft light red, intense load = deep crimson. */
 function shades(t: number) {
   const k = Math.max(0, Math.min(1, t));
   const mix = (a: number[], b: number[]) => a.map((v, i) => Math.round(v + (b[i] - v) * k));
-  const belly = mix([122, 28, 52], [255, 45, 74]);
-  const tendon = mix([150, 80, 104], [255, 150, 140]);
+  const belly = mix([255, 140, 152], [172, 8, 38]);
+  const tendon = mix([255, 196, 202], [222, 92, 112]);
   return {
     belly: `rgb(${belly.join(',')})`,
     tendon: `rgb(${tendon.join(',')})`,
-    opacity: 0.55 + 0.45 * k,
+    opacity: 0.95,
   };
 }
 
@@ -98,7 +98,8 @@ function Figure({ regions, x, intensity, label, uid }: {
         const active = !!r.fiber && t > 0;
         const fill = active ? `url(#${uid}-g${i})` : undefined;
         const cls = active ? `bm hit ${t >= 0.7 ? 'glow' : ''}` : r.m ? 'bm idle' : 'bm plain';
-        const style = active ? { fillOpacity: shades(t).opacity } : undefined;
+        // Inline style so no stylesheet rule can override the gradient fill.
+        const style = active ? { fill, fillOpacity: shades(t).opacity } : undefined;
         const shape = (mirror: boolean) => (
           <g transform={mirror ? 'translate(200,0) scale(-1,1)' : undefined}>
             <path d={r.d} class={cls} fill={fill} style={style} />

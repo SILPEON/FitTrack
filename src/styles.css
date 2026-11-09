@@ -357,7 +357,7 @@ select { border: 0; background: var(--fill); border-radius: 9px; padding: 6px 10
 .bm.plain { fill: rgba(255,255,255,.03); stroke: rgba(255,255,255,.55); }
 .bm.idle { fill: rgba(255,255,255,.07); }
 .bm.assist { fill: rgba(255, 59, 79, .42); }
-.bm.hit { fill: #ff3b4f; filter: drop-shadow(0 0 4px rgba(255, 59, 79, .65)); }
+.bm.hit { filter: none; }
 .bm-lines path { stroke: rgba(255,255,255,.45); stroke-width: 1; fill: none; }
 .bm-label { fill: rgba(255,255,255,.45); font-size: 11px; letter-spacing: 2px; font-weight: 650; }
 .bodymap-card .next-head { margin-bottom: 4px; }
@@ -419,6 +419,6 @@ select { border: 0; background: var(--fill); border-radius: 9px; padding: 6px 10
 .bm-fiber { stroke: rgba(255,255,255,.55); stroke-width: .55; }
 .bm-striation { stroke: none; opacity: .28; pointer-events: none; }
 .bm.hit { stroke: rgba(255,255,255,.95); filter: none; }
-.bm.hit.glow { filter: drop-shadow(0 0 5px rgba(255, 45, 74, .6)); }
+.bm.hit.glow { filter: drop-shadow(0 0 6px rgba(255, 60, 90, .75)); stroke: #fff; stroke-width: 1.6; }
 .bm-scale { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; color: rgba(255,255,255,.6); margin-left: 4px; }
 .bm-scale i { width: 64px; height: 8px; border-radius: 4px; border: 1px solid rgba(255,255,255,.5); }
