@@ -11,7 +11,7 @@
  * A session is a timeline of target tension (0–1) that the user follows.
  */
 
-export interface Segment { start: number; end: number; from: number; to: number; label: string; phase: Phase }
+export interface Segment { start: number; end: number; from: number; to: number; label: string; phase: string }
 export type Phase = 'warmup' | 'slow' | 'elevator' | 'quick' | 'combo' | 'relax';
 
 export interface Level {

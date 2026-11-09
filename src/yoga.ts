@@ -51,16 +51,46 @@ export const ROUTINES: Routine[] = [
     ],
   },
   {
-    id: 'shoulders', name: 'Shoulder-Friendly Upper Mobility', kind: 'Mobility',
-    purpose: 'Thoracic spine, lats and shoulder blades. Do it before upper-body days or whenever the shoulders feel stiff.',
+    id: 'shoulders', name: 'Posture Reset (Rounded Shoulders)', kind: 'Mobility',
+    purpose: 'Opens the chest and strengthens the upper-back muscles that pull the shoulders back. Stretching plus strengthening together is what improves rounded-shoulder posture.',
     poses: [
       { name: 'Blackroll: Thoracic Extension', secs: 60, props: 'Blackroll', cue: 'Roller across the upper back, hands support the head. Extend gently over the roller, move it a few centimetres, repeat. Not on the lower back.' },
       { name: 'Open Book', secs: 45, sides: true, cue: 'Lie on your side, knees bent 90°. Open the top arm across to the other side, following it with your eyes. Knees stay together.' },
-      { name: 'Thread the Needle', secs: 45, sides: true, cue: 'On all fours, slide one arm under the body until the shoulder and head rest on the mat. Breathe into the upper back.' },
-      { name: 'Wall Slides', secs: 60, cue: 'Back to the wall, forearms on the wall in a "W". Slide up only as far as the forearms stay in contact, pain-free.' },
-      { name: 'Slow Band Pull-Aparts', secs: 45, props: 'Resistance band', cue: 'Light band, arms straight. 3 s apart, 3 s back. Feel the muscles between the shoulder blades.' },
-      { name: 'Doorway Pec Stretch (Low)', secs: 45, sides: true, cue: 'Forearm on the door frame with the elbow below shoulder height. Step through gently until the chest stretches. No pain in the front of the shoulder.' },
+      { name: 'Doorway Pec Stretch, Low', secs: 45, sides: true, cue: 'Forearm on the door frame, elbow below shoulder height. Step through until the chest stretches. Ribs down, no pain in the front of the shoulder.' },
+      { name: 'Doorway Pec Stretch, High', secs: 45, sides: true, cue: 'Elbow slightly above shoulder height to reach the lower chest fibres. Same gentle step through.' },
+      { name: 'Chin Tucks', secs: 45, cue: 'Back against the wall or lying down. Draw the chin straight back (double chin), hold 3 s, release. Strengthens the deep neck flexors against forward head posture.' },
+      { name: 'Wall Angels', secs: 60, cue: 'Back, head and arms against the wall in a "W". Slide up to a "Y" only as far as the forearms stay on the wall, then pull the elbows down and back.' },
+      { name: 'Prone Y-T-W', secs: 60, cue: 'Face down, forehead on a folded towel. Lift the arms in a Y, then a T, then a W, thumbs up, 3 s each. Squeeze the shoulder blades down and back.' },
+      { name: 'Band Pull-Aparts', secs: 45, props: 'Resistance band', cue: 'Light band, arms straight at chest height. 3 s apart, 3 s back, shoulders away from the ears.' },
       { name: 'Child\'s Pose Side Reach', secs: 45, sides: true, props: 'Yoga block', cue: 'From child\'s pose, walk both hands to one side to stretch the opposite lat. Hands on the yoga block if overhead feels tight.' },
+    ],
+  },
+  {
+    id: 'front-split', name: 'Front Split Progression', kind: 'Yoga',
+    purpose: 'Hip flexors of the back leg and hamstrings of the front leg, the two limits of the front split. Uses contract-relax (PNF) and blocks to progress safely.',
+    poses: [
+      { name: 'Cat–Cow', secs: 45, cue: 'On all fours, move the spine with the breath to warm up.' },
+      { name: 'Leg Swings, Front–Back', secs: 40, sides: true, cue: 'Hold the wall, swing one straight leg forward and back, gradually higher. Controlled, not flung.' },
+      { name: 'Low Lunge, Hip Flexor', secs: 60, sides: true, cue: 'Back knee on the mat, tuck the tailbone, shift forward until the front of the back hip stretches. Squeeze the back glute.' },
+      { name: 'Half Split with Contract-Relax', secs: 60, sides: true, props: 'Yoga blocks', cue: 'Hips over the back knee, front leg straight, hands on blocks. Every 20 s: press the front heel into the floor for 5 s (about 30 % effort), relax, and sink a little deeper.' },
+      { name: 'Lizard', secs: 45, sides: true, props: 'Yoga block', cue: 'Front foot outside the hand, back knee down. Hips low; forearms on the block if they reach.' },
+      { name: 'Front Split on Blocks', secs: 60, sides: true, props: 'Yoga blocks', cue: 'Slide the front heel forward and the back knee back, hips square. Block under the front thigh or hip to take weight. Stay at a 6–7/10 stretch, breathe.' },
+      { name: 'Supine Hamstring with Band', secs: 45, sides: true, props: 'Resistance band', cue: 'On your back, band around the foot, leg straight up. Press the foot into the band 5 s, relax, draw it closer.' },
+      { name: 'Supine Figure-4', secs: 45, sides: true, cue: 'Cool down: ankle over the opposite knee, pull the thigh towards you.' },
+    ],
+  },
+  {
+    id: 'middle-split', name: 'Middle Split Progression', kind: 'Yoga',
+    purpose: 'Adductors and hip rotation for the side (middle) split. Combines passive stretching with active strength in the end range, which makes new range usable.',
+    poses: [
+      { name: 'Adductor Rock-Backs', secs: 45, sides: true, cue: 'On all fours, one leg straight out to the side. Rock the hips back towards the heel and forward again.' },
+      { name: 'Frog Pose', secs: 90, cue: 'Knees wide, shins parallel, ankles in line with the knees. Forearms down, slowly rock the hips back. Pad the knees with the mat.' },
+      { name: 'Horse Stance Hold', secs: 45, cue: 'Feet wide, toes slightly out, sink into a wide squat with knees over toes. Active strength in the stretched range.' },
+      { name: 'Cossack Squat, Slow', secs: 60, cue: 'Wide stance, shift into one deep side squat while the other leg straightens, toes up. Alternate slowly.' },
+      { name: 'Wide-Leg Forward Fold', secs: 60, props: 'Yoga block', cue: 'Feet wide, hinge from the hips with a flat back, hands or head on the block.' },
+      { name: 'Pancake with Contract-Relax', secs: 60, cue: 'Seated straddle, knees pointing up, fold forward from the hips. Every 20 s: press the heels down into the floor for 5 s, relax and fold deeper.' },
+      { name: 'Straddle up the Wall', secs: 120, cue: 'Lie with the hips against the wall, legs up in a wide V. Let gravity open the legs; relax completely.' },
+      { name: 'Butterfly', secs: 60, cue: 'Soles together, hold the feet, sit tall and gently lean forward.' },
     ],
   },
   {
@@ -90,27 +120,35 @@ export const ROUTINES: Routine[] = [
   },
 ];
 
-/** Seconds a routine takes (both sides counted), with hold times scaled for the program week. */
-export const routineSecs = (r: Routine, scale = 1) =>
-  r.poses.reduce((t, p) => t + Math.round(p.secs * scale) * (p.sides ? 2 : 1), 0);
+/** Time to get into position before each new exercise, and to switch sides. */
+export const TRANSITION_SECS = 10;
+export const SWITCH_SECS = 5;
 
-/** 4-week leg mobility & wellbeing program. Holds get longer as the weeks progress. */
+/** Seconds a routine takes (both sides and transitions counted), with holds scaled for the program week. */
+export const routineSecs = (r: Routine, scale = 1) =>
+  r.poses.reduce((t, p) => t + TRANSITION_SECS + Math.round(p.secs * scale) * (p.sides ? 2 : 1) + (p.sides ? SWITCH_SECS : 0), 0);
+
+/**
+ * 4-week mobility & splits block, meant to be repeated. Built around: leg mobility, rounded shoulders,
+ * general mobility and the front and middle splits. Flexibility research points to total weekly
+ * stretch time per muscle (≥ 5 min), frequency (5–6 days) and contract-relax as what drives progress.
+ */
 export const PROGRAM = {
-  name: '4-Week Leg Mobility Program',
+  name: 'Mobility & Splits Program',
   weeks: [
-    { week: 1, scale: 1.0, focus: 'Learn the poses. Gentle holds, never more than a 6/10 stretch.' },
-    { week: 2, scale: 1.15, focus: 'Slightly longer holds. Add contract-relax in the band hamstring stretch.' },
-    { week: 3, scale: 1.3, focus: 'Longer holds. Focus on breathing into tight spots.' },
-    { week: 4, scale: 1.45, focus: 'Longest holds. Retest your toe-touch and compare with week 1.' },
+    { week: 1, scale: 1.0, focus: 'Learn the positions. Stretch to about 6/10, never into pain. Measure your splits and toe touch.' },
+    { week: 2, scale: 1.15, focus: 'Slightly longer holds. Use the contract-relax cues in the split routines.' },
+    { week: 3, scale: 1.3, focus: 'Longer holds. Breathe out slowly into each stretch.' },
+    { week: 4, scale: 1.45, focus: 'Longest holds. Measure again and compare; then repeat the block.' },
   ],
   /** 0 = Monday … 6 = Sunday */
   schedule: [
-    ['legs-daily', 'hamstrings'],
+    ['legs-daily', 'front-split'],
     ['legs-daily', 'shoulders'],
-    ['legs-daily', 'pilates-core'],
-    ['legs-daily', 'hamstrings'],
+    ['legs-daily', 'middle-split'],
+    ['legs-daily', 'front-split'],
     ['legs-daily', 'shoulders'],
-    ['legs-daily', 'pilates-core', 'blackroll'],
-    ['legs-daily', 'wind-down'],
+    ['legs-daily', 'middle-split', 'blackroll'],
+    ['hamstrings', 'shoulders', 'wind-down'],
   ] as string[][],
 };

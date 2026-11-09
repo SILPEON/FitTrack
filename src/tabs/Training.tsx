@@ -8,6 +8,7 @@ import { NextUpCard, PlansScreen, equipmentTag, getGear, normalise } from './Pla
 import { BodyMap, IntensityLegend } from '../bodymap';
 import { KegelCard } from './Kegel';
 import { YogaCard } from './Yoga';
+import { BreathingCard } from './Breathing';
 import { DEFAULT_GEAR, LIBRARY, type Muscle } from '../plans';
 import { Check, PenLine, ChevronDown, ChevronUp, CircleCheck, ClipboardList, Info, Medal, PersonStanding, Timer, Trophy } from 'lucide-preact';
 import { restTimer } from '../restTimer';
@@ -90,6 +91,7 @@ export function TrainingHome() {
       )}
       <YogaCard />
       <KegelCard />
+      <BreathingCard />
     </Page>
   );
 }

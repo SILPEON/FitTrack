@@ -1,5 +1,5 @@
 import { useState } from 'preact/hooks';
-import { ChevronLeft, ChevronRight, Dumbbell, Ellipsis, Flower2, HeartPulse, Route as RouteIcon, type LucideIcon } from 'lucide-preact';
+import { ChevronLeft, ChevronRight, Dumbbell, Ellipsis, Flower2, HeartPulse, Route as RouteIcon, Wind, type LucideIcon } from 'lucide-preact';
 import { db, type Route, type Workout, type YogaSession } from '../db';
 import { activityInfo, dayKey, fmt, fmtDistance, fmtDuration } from '../calc';
 import { ROUTINES } from '../yoga';
@@ -8,13 +8,16 @@ import { ActionSheet, Empty, Page, Row, Section, useLive, useNav } from '../ui';
 import { WorkoutScreen, isInProgress, repeatWorkout, setCount, volume } from './Training';
 import { RouteDetail } from './Routes';
 import { getKegel } from './Kegel';
+import { getBreathing } from './Breathing';
+import { BREATHING, type BreathState } from '../breathing';
 import { DEFAULT_KEGEL } from '../kegel';
 
-type Kind = 'workout' | 'yoga' | 'kegel' | 'route';
+type Kind = 'workout' | 'yoga' | 'kegel' | 'breath' | 'route';
 const KINDS: { key: Kind; label: string; icon: LucideIcon }[] = [
   { key: 'workout', label: 'Workouts', icon: Dumbbell },
   { key: 'yoga', label: 'Yoga', icon: Flower2 },
   { key: 'kegel', label: 'Kegel', icon: HeartPulse },
+  { key: 'breath', label: 'Breathing', icon: Wind },
   { key: 'route', label: 'Routes', icon: RouteIcon },
 ];
 
@@ -27,6 +30,7 @@ function useItems(): Item[] {
   const yoga = useLive(() => db.yogaSessions.toArray(), [], [] as YogaSession[]);
   const routes = useLive(() => db.routes.toArray(), [], [] as Route[]);
   const kegel = useLive(() => getKegel(), [], DEFAULT_KEGEL);
+  const breath = useLive(() => getBreathing(), [], { log: [] } as BreathState);
   const items: Item[] = [];
   for (const w of workouts) {
     if (isInProgress(w) || !w.entries.length) continue;
@@ -39,6 +43,9 @@ function useItems(): Item[] {
   }
   for (const k of kegel.log) {
     items.push({ kind: 'kegel', day: k.day, time: new Date(k.day + 'T12:00:00').getTime(), title: 'Kegel training', sub: `Level ${k.level} · ${fmtDuration(k.secs)}` });
+  }
+  for (const b of breath.log) {
+    items.push({ kind: 'breath', day: b.day, time: b.time, title: BREATHING.find((x) => x.id === b.id)?.name ?? 'Breathing', sub: `Breathing · ${fmtDuration(b.secs)}` });
   }
   for (const r of routes) {
     if (r.planned) continue;

@@ -35,7 +35,8 @@ export interface KV { key: string; value: unknown }
 export type Pose = 'front' | 'side' | 'back';
 export interface Photo { id: number; day: string; time: number; pose: Pose; blob: Blob; w: number; h: number; note?: string }
 export interface YogaSession { id: number; day: string; time: number; routineId: string; secs: number }
-export interface MobilityTest { id: number; day: string; toeTouchCm: number }
+/** Flexibility measurements in cm (each optional). Splits: lowest point of the hips/crotch to the floor. */
+export interface MobilityTest { id: number; day: string; toeTouchCm?: number; frontLCm?: number; frontRCm?: number; middleCm?: number }
 /** Bowel movement, Bristol Stool Scale type 1–7. */
 export interface Stool { id: number; day: string; time: number; type: number; urgency?: boolean; strain?: boolean; pain?: boolean; blood?: boolean; note?: string }
 
