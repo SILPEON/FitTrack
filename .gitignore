@@ -3,3 +3,5 @@ DerivedData/
 *.xcuserstate
 xcuserdata/
 FitTrack.zip
+node_modules/
+dist/

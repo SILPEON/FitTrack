@@ -1,9 +1,11 @@
-name: Build unsigned IPA
+name: Build unsigned IPA (native iOS version, manual only)
 
 on:
-  push:
-    branches: [main]
   workflow_dispatch:
+
+defaults:
+  run:
+    working-directory: ios-native
 
 jobs:
   build:
@@ -55,4 +57,4 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: FitTrack-ipa
-          path: FitTrack.ipa
+          path: ios-native/FitTrack.ipa
