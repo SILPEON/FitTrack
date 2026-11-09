@@ -1,4 +1,5 @@
 import { createContext, type ComponentChildren, type VNode } from 'preact';
+import { createPortal } from 'preact/compat';
 import { useContext, useEffect, useRef, useState } from 'preact/hooks';
 import { liveQuery } from 'dexie';
 import { fmt, parseNum } from './calc';
@@ -157,6 +158,14 @@ export function NumberInput({ value, onChange, placeholder, decimals = true, cla
   );
 }
 
+// ---------- Full-screen overlays ----------
+
+/**
+ * Renders children directly into <body>. Full-screen layers must not live inside the scrolling
+ * content area: iOS Safari confines position:fixed children of scroll containers to that area.
+ */
+export const Overlay = ({ children }: { children: ComponentChildren }) => createPortal(<>{children}</>, document.body);
+
 // ---------- Sheets (modals) ----------
 
 export function Sheet({ open, onClose, title, children, actions }: {
@@ -164,7 +173,7 @@ export function Sheet({ open, onClose, title, children, actions }: {
 }) {
   if (!open) return null;
   return (
-    <div class="sheet-backdrop" onClick={onClose}>
+    <Overlay><div class="sheet-backdrop" onClick={onClose}>
       <div class="sheet" onClick={(e) => e.stopPropagation()}>
         <header class="topbar">
           <div class="topbar-side"><button class="link" onClick={onClose}>Cancel</button></div>
@@ -173,7 +182,7 @@ export function Sheet({ open, onClose, title, children, actions }: {
         </header>
         <div class="sheet-content">{children}</div>
       </div>
-    </div>
+    </div></Overlay>
   );
 }
 
@@ -182,7 +191,7 @@ export function ActionSheet({ open, onClose, actions }: {
 }) {
   if (!open) return null;
   return (
-    <div class="sheet-backdrop" onClick={onClose}>
+    <Overlay><div class="sheet-backdrop" onClick={onClose}>
       <div class="action-sheet" onClick={(e) => e.stopPropagation()}>
         <div class="card">
           {actions.map((a) => (
@@ -191,7 +200,7 @@ export function ActionSheet({ open, onClose, actions }: {
         </div>
         <div class="card"><button class="action bold" onClick={onClose}>Cancel</button></div>
       </div>
-    </div>
+    </div></Overlay>
   );
 }
 

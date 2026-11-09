@@ -4,7 +4,7 @@ import { db, type Activity, type Pt, type Route } from '../db';
 import { ACTIVITIES, activityInfo, fmt, fmtDate, fmtDistance, fmtDuration, fmtPace, fmtSpeed, parseGPX, pathDistance, shareFile, toGPX } from '../calc';
 import { createMap, dotIcon, routeLeg, searchPlace, userIcon } from '../map';
 import { recorder } from '../recorder';
-import { ActionRow, ActionSheet, Empty, Page, Row, Section, Segmented, useLive, useNav } from '../ui';
+import { ActionRow, ActionSheet, Empty, Page, Row, Section, Segmented, useLive, useNav, Overlay } from '../ui';
 import { Compass, Lock, LocateFixed, Pause, Play, Repeat, Route as RouteIcon, Square, Trash, Undo2, Upload } from 'lucide-preact';
 import { Ico } from '../icons';
 
@@ -263,14 +263,14 @@ function PocketLock({ onUnlock, distance, elapsed }: { onUnlock: () => void; dis
   const start = () => { setHolding(true); timer.current = window.setTimeout(onUnlock, 1500); };
   const cancel = () => { setHolding(false); if (timer.current) clearTimeout(timer.current); };
   return (
-    <div class="pocket" onPointerDown={start} onPointerUp={cancel} onPointerLeave={cancel} onPointerCancel={cancel}
+    <Overlay><div class="pocket" onPointerDown={start} onPointerUp={cancel} onPointerLeave={cancel} onPointerCancel={cancel}
       onContextMenu={(e) => e.preventDefault()}>
       <div class="pocket-stats">
         <div>{fmtDistance(distance)}</div>
         <div>{fmtDuration(elapsed)}</div>
       </div>
       <div class={holding ? 'pocket-hint holding' : 'pocket-hint'}>Hold anywhere to unlock</div>
-    </div>
+    </div></Overlay>
   );
 }
 

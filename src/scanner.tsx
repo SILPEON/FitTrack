@@ -1,3 +1,4 @@
+import { Overlay } from './ui';
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { BrowserMultiFormatReader, type IScannerControls } from '@zxing/browser';
 import { BarcodeFormat, DecodeHintType } from '@zxing/library';
@@ -53,7 +54,7 @@ export function BarcodeScanner({ onCode, onClose }: { onCode: (code: string) => 
   };
 
   return (
-    <div class="scanner">
+    <Overlay><div class="scanner">
       <video ref={video} class="scanner-video" playsInline muted autoPlay />
       <div class="scanner-frame"><div class="scanner-line" /></div>
       <header class="scanner-top">
@@ -69,6 +70,6 @@ export function BarcodeScanner({ onCode, onClose }: { onCode: (code: string) => 
           <button type="submit" disabled={!manual.trim()}>Go</button>
         </form>
       </div>
-    </div>
+    </div></Overlay>
   );
 }

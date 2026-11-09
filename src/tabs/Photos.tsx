@@ -3,7 +3,7 @@ import { Camera, Columns2, Ghost, ImagePlus, Images, Layers, SwitchCamera, Timer
 import { db, type Photo, type Pose, type WeightEntry } from '../db';
 import { dayKey, fmt, fmtDate } from '../calc';
 import { Ico } from '../icons';
-import { ActionRow, Empty, Page, Row, Section, Segmented, useLive, useNav } from '../ui';
+import { ActionRow, Empty, Page, Row, Section, Segmented, useLive, useNav, Overlay } from '../ui';
 
 const POSES: { key: Pose; label: string }[] = [{ key: 'front', label: 'Front' }, { key: 'side', label: 'Side' }, { key: 'back', label: 'Back' }];
 const MAX_EDGE = 1440;
@@ -251,7 +251,7 @@ function PoseCamera({ pose, ghost, onClose }: { pose: Pose; ghost?: Photo; onClo
   };
 
   return (
-    <div class="scanner">
+    <Overlay><div class="scanner">
       <video ref={video} class={`scanner-video ${facing === 'user' ? 'mirror' : ''}`} playsInline muted autoPlay />
       {ghost && showGhost && <img src={ghostUrl} class="ghost" alt="" />}
       {count != null && <div class="countdown">{count}</div>}
@@ -274,6 +274,6 @@ function PoseCamera({ pose, ghost, onClose }: { pose: Pose; ghost?: Photo; onClo
           </button>
         </div>
       </div>
-    </div>
+    </div></Overlay>
   );
 }

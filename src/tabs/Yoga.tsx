@@ -5,7 +5,7 @@ import { db, type MobilityTest, type YogaSession } from '../db';
 import { dayKey, fmt, fmtDate, fmtDuration } from '../calc';
 import { PROGRAM, ROUTINES, routineSecs, type Routine } from '../yoga';
 import { Ico } from '../icons';
-import { ActionRow, Empty, LineChart, NumberInput, Page, Row, Section, Sheet, useLive, useNav } from '../ui';
+import { ActionRow, Empty, LineChart, NumberInput, Page, Row, Section, Sheet, useLive, useNav, Overlay } from '../ui';
 
 const KIND_ICON: Record<Routine['kind'], LucideIcon> = { Yoga: Flower2, Pilates: Sparkles, Mobility: Leaf, Recovery: Wind };
 const routineIcon = (r: Routine) => (r.id === 'wind-down' ? Moon : KIND_ICON[r.kind]);
@@ -238,7 +238,7 @@ function Player({ routine, scale, onClose }: { routine: Routine; scale: number; 
   const C = 2 * Math.PI * 10;
 
   return (
-    <div class="player">
+    <Overlay><div class="player">
       <header class="player-top">
         <button class="icon-link" aria-label="Close" onClick={onClose}><Ico icon={X} size={26} /></button>
         <span class="sub small">{routine.name} · {Math.min(idx + 1, steps.length)}/{steps.length}</span>
@@ -280,6 +280,6 @@ function Player({ routine, scale, onClose }: { routine: Routine; scale: number; 
           <button class="ctrl" aria-label="Next" onClick={() => go(idx + 1)}><Ico icon={SkipForward} size={26} /></button>
         </div>
       )}
-    </div>
+    </div></Overlay>
   );
 }

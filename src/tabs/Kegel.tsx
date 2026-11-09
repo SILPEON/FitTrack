@@ -4,7 +4,7 @@ import { db } from '../db';
 import { dayKey, fmtDate, fmtDuration } from '../calc';
 import { DEFAULT_KEGEL, KEGEL_GUIDE, LEVELS, SESSIONS_PER_DAY, SESSIONS_TO_ADVANCE, buildSession, segmentAt, tensionAt, type KegelState, type Level } from '../kegel';
 import { Ico } from '../icons';
-import { ActionRow, Page, Row, Section, useLive, useNav } from '../ui';
+import { ActionRow, Page, Row, Section, useLive, useNav, Overlay } from '../ui';
 
 const getKegel = async (): Promise<KegelState> => ({ ...DEFAULT_KEGEL, ...((await db.kv.get('kegel'))?.value as Partial<KegelState> ?? {}) });
 const saveKegel = (s: KegelState) => db.kv.put({ key: 'kegel', value: s });
@@ -189,7 +189,8 @@ function KegelPlayer({ level, onClose, onDone }: { level: Level; onClose: () => 
         const f = 220 * Math.pow(2, v);
         a.osc.frequency.setTargetAtTime(f, now, 0.06);
         a.osc2.frequency.setTargetAtTime(f * 2, now, 0.06);
-        const vol = muted || !running ? 0 : 0.018 + 0.07 * v;
+        // Silent when relaxed; fades in with tension. The smoothing below avoids clicks.
+        const vol = muted || !running || v < 0.01 ? 0 : 0.012 + 0.076 * v;
         a.gain.gain.setTargetAtTime(vol, now, 0.08);
       }
       setFrame((n) => (n + 1) % 1e6);
@@ -205,7 +206,7 @@ function KegelPlayer({ level, onClose, onDone }: { level: Level; onClose: () => 
   const v = tensionAt(segments, t);
 
   return (
-    <div class="player kegel-player">
+    <Overlay><div class="player kegel-player">
       <header class="player-top">
         <button class="icon-link light" aria-label="Close" onClick={onClose}><Ico icon={X} size={26} /></button>
         <span class="small kegel-top">Level {level.level} · {level.name} · {level.position}</span>
@@ -233,7 +234,7 @@ function KegelPlayer({ level, onClose, onDone }: { level: Level; onClose: () => 
           </div>
         </>
       )}
-    </div>
+    </div></Overlay>
   );
 }
 
