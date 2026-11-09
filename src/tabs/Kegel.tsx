@@ -104,8 +104,7 @@ function KegelScreen() {
         </Section>
       )}
 
-      {playing && <TrackPlayer {...buildSession(playing)} top={`Level ${playing.level} · ${playing.name} · ${playing.position}`}
-        hint="Follow the circle with your pelvic floor. Breathe normally; keep buttocks and thighs relaxed."
+      {playing && <TrackPlayer {...buildSession(playing)}
         doneText={`Level ${playing.level}. Remember: relaxed, normal breathing for the rest of the day.`}
         muteKey="kegelMuted" onClose={() => setPlaying(null)} onDone={async (secs) => {
         const s = await getKegel();

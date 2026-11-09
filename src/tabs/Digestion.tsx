@@ -105,12 +105,12 @@ export function DigestionHome() {
   return (
     <Page title="Digestion">
       <div class="stat-tiles">
-        <div class="tile"><span class="tile-label">Per day</span><b>{fmt(total / 14, 1)}</b></div>
+        <div class="tile"><span class="tile-label">Today</span><b>{recent.filter((s) => s.day === dayKey()).length}</b></div>
         <div class="tile"><span class="tile-label">Average type</span><b>{total ? fmt(avgType, 1) : '–'}</b></div>
         <div class="tile"><span class="tile-label">Healthy (3–5)</span><b>{total ? `${Math.round((healthy / total) * 100)} %` : '–'}</b></div>
       </div>
 
-      <Section title="Last 14 days">
+      <Section title="Last 14 days" right={`${total} logged`}>
         <div class="pad">
           <div class="stool-chart">
             <div class="stool-axis">{[1, 2, 3, 4, 5, 6, 7].map((t) => <span>{t}</span>)}</div>

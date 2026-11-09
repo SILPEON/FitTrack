@@ -10,21 +10,45 @@ export function MetabolismHome() {
   const pager = useRef<HTMLDivElement>(null);
   const [page, setPage] = useState(0);
 
-  const go = (i: number) => pager.current?.scrollTo({ left: i * pager.current.clientWidth, behavior: 'smooth' });
+  // While a tap-triggered scroll runs, ignore scroll events so the pill doesn't flicker through the middle page.
+  const jumping = useRef(false);
+  const [fade, setFade] = useState(false);
+  const go = (i: number) => {
+    const el = pager.current;
+    if (!el || i === page) return;
+    jumping.current = true;
+    setPage(i);
+    if (Math.abs(i - page) > 1) {
+      // Not a neighbour: fade out, jump straight there, fade back in.
+      setFade(true);
+      setTimeout(() => { el.scrollTo({ left: i * el.clientWidth, behavior: 'instant' as ScrollBehavior }); setFade(false); setTimeout(() => { jumping.current = false; }, 50); }, 130);
+    } else {
+      el.scrollTo({ left: i * el.clientWidth, behavior: 'smooth' });
+      setTimeout(() => { jumping.current = false; }, 600);
+    }
+  };
 
-  // Keep the visible page when the width changes (rotation, first layout).
+  // Keep the visible page when the width changes (rotation, first layout) — not on page changes.
+  const pageRef = useRef(page);
+  pageRef.current = page;
   useEffect(() => {
     const el = pager.current;
     if (!el) return;
-    const ro = new ResizeObserver(() => { el.scrollLeft = page * el.clientWidth; });
+    let width = el.clientWidth;
+    const ro = new ResizeObserver(() => {
+      if (el.clientWidth === width) return;
+      width = el.clientWidth;
+      el.scrollLeft = pageRef.current * width;
+    });
     ro.observe(el);
     return () => ro.disconnect();
-  }, [page]);
+  }, []);
 
   return (
     <div class="pager-wrap">
       <div class="pager" ref={pager}
-        onScroll={(e) => { const el = e.currentTarget as HTMLDivElement; const p = Math.round(el.scrollLeft / Math.max(el.clientWidth, 1)); if (p !== page) setPage(p); }}>
+        style={{ opacity: fade ? 0 : 1, transition: 'opacity .13s ease' }}
+        onScroll={(e) => { if (jumping.current) return; const el = e.currentTarget as HTMLDivElement; const p = Math.round(el.scrollLeft / Math.max(el.clientWidth, 1)); if (p !== page) setPage(p); }}>
         <div class="pager-page" aria-hidden={page !== 0}><WeightHome /></div>
         <div class="pager-page" aria-hidden={page !== 1}><NutritionHome /></div>
         <div class="pager-page" aria-hidden={page !== 2}><DigestionHome /></div>

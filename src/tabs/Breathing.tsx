@@ -18,8 +18,7 @@ async function logSession(id: string, secs: number) {
 function BreathPlayer({ ex, minutes, onClose }: { ex: Breathing; minutes: number; onClose: () => void }) {
   const [session] = useState(() => buildBreathSession(ex, minutes));
   return (
-    <TrackPlayer {...session} top={`${ex.name} · ${ex.pattern}`}
-      hint="Follow the circle with your breath: up = breathe in, down = breathe out. Gentle, never forced."
+    <TrackPlayer {...session}
       yLabels={['Empty', '', 'Half', '', 'Full']}
       valueText={(v) => (v > 0.98 ? 'Full' : v < 0.02 ? 'Empty' : `${Math.round(v * 100)} %`)}
       doneText={`${ex.name}. Notice how you feel before getting up.`}
@@ -33,7 +32,7 @@ export function BreathingCard() {
   const st = useLive(() => getBreathing(), [], { log: [] } as BreathState);
   const [playing, setPlaying] = useState<Breathing | null>(null);
   const done = new Set(st.log.filter((l) => l.day === dayKey()).map((l) => l.id));
-  const quick = BREATHING.filter((b) => ['cyclic-sigh', 'resonance', 'extended-exhale'].includes(b.id));
+  const quick = BREATHING.filter((b) => ['cyclic-sigh', 'resonance', 'complete-exhale'].includes(b.id));
   return (
     <Section title="Breathing" right={<button class="link small-link" onClick={() => nav.push(<BreathingScreen />)}>All exercises</button>}>
       {quick.map((b) => (
@@ -47,6 +46,11 @@ export function BreathingCard() {
     </Section>
   );
 }
+
+const GROUPS = [
+  { key: 'calm' as const, title: 'Calm & focus', footer: undefined as string | undefined },
+  { key: 'capacity' as const, title: 'Lung capacity', footer: `Lung capacity itself is mostly set by your body size; these train the breathing muscles, how completely you exhale, chest-wall mobility and CO₂ tolerance. Progress by choosing longer sessions. ${BREATH_CAUTION}` },
+];
 
 function BreathingScreen() {
   const st = useLive(() => getBreathing(), [], { log: [] } as BreathState);
@@ -64,8 +68,9 @@ function BreathingScreen() {
         <div class="tile"><span class="tile-label">Minutes</span><b>{Math.round(week.reduce((t, l) => t + l.secs, 0) / 60)}</b></div>
       </div>
 
-      <Section title="Exercises" footer={BREATH_CAUTION}>
-        {BREATHING.map((b) => {
+      {GROUPS.map((grp) => (
+      <Section title={grp.title} footer={grp.footer}>
+        {BREATHING.filter((b) => b.group === grp.key).map((b) => {
           const isOpen = open === b.id;
           const m = mins[b.id] ?? b.defaultMin;
           return (
@@ -91,6 +96,7 @@ function BreathingScreen() {
           );
         })}
       </Section>
+      ))}
 
       {st.log.length > 0 && (
         <Section title="Recent sessions">

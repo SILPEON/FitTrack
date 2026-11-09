@@ -22,10 +22,6 @@ const HISTORY_SECS = 7;
 export interface TrackProps {
   segments: Segment[];
   total: number;
-  /** Small line at the top of the player. */
-  top: string;
-  /** Instruction under the track. */
-  hint: string;
   /** Labels for 0, 25, 50, 75 and 100 % on the y axis. */
   yLabels?: string[];
   /** How the current value is shown next to the countdown. */
@@ -38,7 +34,7 @@ export interface TrackProps {
 }
 
 /** Guided session: the target value scrolls by as a track, with a soft tone that rises with it. */
-export function TrackPlayer({ segments, total, top, hint, yLabels = ['0%', '25%', '50%', '75%', '100%'], valueText = (v) => `${Math.round(v * 100)} %`, doneText, muteKey, onClose, onDone }: TrackProps) {
+export function TrackPlayer({ segments, total, yLabels = ['0%', '25%', '50%', '75%', '100%'], valueText = (v) => `${Math.round(v * 100)} %`, doneText, muteKey, onClose, onDone }: TrackProps) {
   const canvas = useRef<HTMLCanvasElement>(null);
   const [running, setRunning] = useState(true);
   const [muted, setMuted] = useState(() => { try { return localStorage.getItem(muteKey) === '1'; } catch { return false; } });
@@ -121,7 +117,6 @@ export function TrackPlayer({ segments, total, top, hint, yLabels = ['0%', '25%'
     <Overlay><div class="player kegel-player">
       <header class="player-top">
         <button class="icon-link light" aria-label="Close" onClick={onClose}><Ico icon={X} size={26} /></button>
-        <span class="small kegel-top">{top}</span>
         <button class="icon-link light" aria-label={muted ? 'Sound on' : 'Sound off'} onClick={() => setMuted(!muted)}><Ico icon={muted ? VolumeX : Volume2} size={22} /></button>
       </header>
       <div class="player-bar"><div style={{ width: `${Math.min(100, (t / total) * 100)}%` }} /></div>
@@ -136,11 +131,11 @@ export function TrackPlayer({ segments, total, top, hint, yLabels = ['0%', '25%'
       ) : (
         <>
           <div class="kegel-phase">
+            {/* Fixed-height block (max. two lines) so the track below never changes size. */}
             <div class="kegel-label">{seg.label}</div>
             <div class="kegel-sub"><span class="kegel-pct" style={{ color: tensionColor(v) }}>{valueText(v)}</span> · {left} s</div>
           </div>
           <canvas ref={canvas} class="kegel-canvas" aria-label={`Target ${valueText(v)}`} />
-          <div class="kegel-hint">{hint}</div>
           <div class="player-controls">
             <button class="ctrl main" aria-label={running ? 'Pause' : 'Resume'} onClick={togglePause}><Ico icon={running ? Pause : Play} size={32} /></button>
           </div>
