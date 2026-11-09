@@ -39,7 +39,8 @@ jobs:
         run: |
           grep -q "BUILD SUCCEEDED" build.log && echo "BUILD SUCCEEDED"
           echo "Warnings: $(grep -E 'warning:' build.log | grep -v 'ld: warning' | sort -u | wc -l)"
-          grep -E "\.swift:[0-9]+:[0-9]+: warning:" build.log | sed 's|.*/FitTrack/FitTrack/||' | sort -u | head -60
+          grep -E "\.swift:[0-9]+:[0-9]+: warning:" build.log | sed 's|.*/FitTrack/FitTrack/||' | sort -u | head -60 || true
+          grep -E "warning:" build.log | sort -u | head -10 || true
           APP=build/Release-iphoneos/FitTrack.app
           ls -la "$APP"
           file "$APP/FitTrack"
