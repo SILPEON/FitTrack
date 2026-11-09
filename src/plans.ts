@@ -76,7 +76,7 @@ export const LIBRARY: PlanExercise[] = [
     cue: 'Slight bend in the elbows, open the arms in an arc. Stop with the elbows at bench height.',
     shoulder: 'Never let the dumbbells drop below the bench. The stretched position stresses the front of the shoulder.' },
   // ---------- Shoulders ----------
-  { name: 'Half-Kneeling One-Arm Dumbbell Press', group: 'Shoulders', equipment: 'Dumbbell', load: 'db', targets: { Shoulders: 1, Arms: 0.25 }, pattern: 'push',
+  { name: 'Half-Kneeling One-Arm Dumbbell Press', group: 'Shoulders', equipment: 'Dumbbell', load: 'db', targets: { Shoulders: 1, Arms: 0.25 }, pattern: 'push', perSide: true,
     cue: 'Kneel on one knee, press with the same-side arm as the down knee. Neutral grip, press up and slightly forward, ribs down.',
     shoulder: 'Shoulder-friendlier than two-arm overhead pressing. If it pinches, skip it: lateral raises cover the delts.' },
   { name: 'Lateral Raise (Kettlebell, One Arm)', group: 'Shoulders', equipment: 'Kettlebell 5 kg', load: 'kb', targets: { Shoulders: 1 }, perSide: true,
@@ -194,11 +194,12 @@ export const PLANS: Plan[] = [
         i('Heel-Elevated Goblet Squat', 4, '12–20', 90),
         i('Barbell Romanian Deadlift', 3, '8–12', 120),
         i('Push-Up on Handles', 3, '8–20', 90),
-        i('Dumbbell Fly (Short Range)', 2, '12–15', 60),
         i('Pull-Up (Band-Assisted if Needed)', 3, '5–12', 120),
-        i('Half-Kneeling One-Arm Dumbbell Press', 2, '8–12', 75),
-        i('Incline Dumbbell Curl (60°)', 2, '10–15', 60),
+        i('Dumbbell Fly (Short Range)', 2, '12–15', 60),
         i('Band Pull-Apart', 2, '15–25', 45),
+        i('Half-Kneeling One-Arm Dumbbell Press', 2, '8–12', 75),
+        i('Band Face Pull', 2, '15–20', 45),
+        i('Incline Dumbbell Curl (60°)', 2, '10–15', 60),
         i('Lying Neck Extension', 3, '15–25', 45),
         i('Lying Leg Raise', 2, '10–15', 45),
       ] },
@@ -236,8 +237,8 @@ export const PLANS: Plan[] = [
         i('Half-Kneeling One-Arm Dumbbell Press', 3, '8–12', 75),
         i('Pull-Up (Band-Assisted if Needed)', 3, '5–12', 120),
         i('Dumbbell Fly (Short Range)', 2, '12–15', 60),
-        i('Lateral Raise (Kettlebell, One Arm)', 2, '12–20', 45),
         i('Band Face Pull', 3, '15–20', 45),
+        i('Lateral Raise (Kettlebell, One Arm)', 2, '12–20', 45),
         i('Lying Neck Flexion', 2, '15–25', 45),
         i('Lying Neck Extension', 2, '15–25', 45),
         i('Incline Dumbbell Curl (60°)', 2, '10–15', 60),
@@ -252,8 +253,8 @@ export const PLANS: Plan[] = [
       ] },
       { id: 'UB', name: 'Upper B – Shoulders & Arms', focus: 'Push-ups · flat press · rows · laterals', minutes: 65, warmup: UPPER_WARMUP, items: [
         i('Push-Up on Handles', 3, '8–20', 90),
-        i('Flat Dumbbell Press (Neutral Grip)', 3, '10–15', 90),
         i('Chest-Supported Dumbbell Row (40°)', 4, '10–15', 75),
+        i('Flat Dumbbell Press (Neutral Grip)', 3, '10–15', 90),
         i('Band Straight-Arm Pulldown', 3, '12–20', 45),
         i('Lateral Raise (Kettlebell, One Arm)', 2, '12–20', 45),
         i('Prone Y-Raise (40° Incline)', 2, '10–15', 45),
@@ -337,3 +338,23 @@ export const PRINCIPLES: { title: string; text: string }[] = [
   { title: 'Tight hamstrings', text: 'Romanian deadlifts are trained only as deep as your back stays flat. That depth will grow. Pair the plan with the Hamstring Release routine in the Yoga tab 2–3× per week.' },
   { title: 'When the fixed loads get too easy', text: 'Your plates will eventually limit hip thrusts and RDLs. The single most useful purchase: 2×10 kg or 4×5 kg plates for the barbell.' },
 ];
+
+/**
+ * Shoulder-safety rule: after every pressing exercise, a pulling exercise must come
+ * before the next press. Returns the violations (empty = OK).
+ */
+export function pushPullOrderIssues(plan: Plan): string[] {
+  const issues: string[] = [];
+  for (const d of plan.days) {
+    let pendingPush: string | null = null;
+    for (const it of d.items) {
+      const pat = EX(it.name).pattern;
+      if (pat === 'push') {
+        if (pendingPush) issues.push(`${plan.id}/${d.id}: ${pendingPush} → ${it.name} without a pull in between`);
+        pendingPush = it.name;
+      } else if (pat === 'pull') pendingPush = null;
+    }
+    if (pendingPush) issues.push(`${plan.id}/${d.id}: ${pendingPush} is the last press with no pull after it`);
+  }
+  return issues;
+}

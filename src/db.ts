@@ -6,13 +6,13 @@ export const MUSCLES = ['Glutes', 'Quads', 'Chest', 'Shoulders', 'Neck', 'Biceps
   'Hamstrings', 'Forearms', 'Calves', 'Full Body'] as const;
 
 export interface Exercise { id: number; name: string; muscle: string; equipment: string; custom: boolean }
-export interface SetEntry { reps: number; weight: number; done?: boolean }
+export interface SetEntry { reps: number; weight: number; done?: boolean; side?: 'L' | 'R' }
 export interface WorkoutEntry {
   exerciseId: number; sets: SetEntry[];
   /** Set when the workout was started from a plan. */
-  target?: string; rest?: number; note?: string;
+  target?: string; rest?: number; note?: string; done?: boolean;
 }
-export interface Workout { id: number; date: number; title: string; notes: string; entries: WorkoutEntry[]; planId?: string; dayId?: string }
+export interface Workout { id: number; date: number; title: string; notes: string; entries: WorkoutEntry[]; planId?: string; dayId?: string; finishedAt?: number }
 export interface WeightEntry { id: number; day: string; kg: number }
 /** Nutrients per 100 g. */
 export interface Food {

@@ -1,8 +1,9 @@
 import { useState } from 'preact/hooks';
 import { CalendarDays, ChevronDown, ChevronUp, ClipboardList, Dumbbell, Info, Play, ShieldCheck, Star, Timer } from 'lucide-preact';
-import { db, type Exercise, type Workout, type WorkoutEntry } from '../db';
+import { db, type Exercise, type SetEntry, type Workout, type WorkoutEntry } from '../db';
+import { BodyMap } from '../bodymap';
 import { fmt } from '../calc';
-import { DEFAULT_GEAR, EX, PLANS, PLATES, PRINCIPLES, PRIORITY, SETUP, defaultLoad, weeklyVolume, type Gear, type Plan, type PlanDay } from '../plans';
+import { DEFAULT_GEAR, EX, LIBRARY, PLANS, PLATES, PRINCIPLES, PRIORITY, SETUP, defaultLoad, weeklyVolume, type Gear, type Muscle, type Plan, type PlanDay } from '../plans';
 import { Ico } from '../icons';
 import { ActionRow, Bar, NumberInput, Page, Row, Section, useLive, useNav } from '../ui';
 
@@ -36,16 +37,33 @@ export async function startPlanDay(plan: Plan, day: PlanDay): Promise<number> {
     const id = await exerciseId(item.name);
     const prev = all.flatMap((w) => w.entries).find((e) => e.exerciseId === id && e.sets.length);
     const low = parseInt(item.reps, 10) || 10;
-    const sets = Array.from({ length: item.sets }, (_, k) => prev?.sets[Math.min(k, prev.sets.length - 1)]
-      ? { ...prev.sets[Math.min(k, prev.sets.length - 1)] }
-      : { reps: low, weight: defaultLoad(ex.load, gear) });
+    const fresh = { reps: low, weight: defaultLoad(ex.load, gear) };
+    // One-sided exercises get a Left and a Right row per set.
+    const rows = ex.perSide ? item.sets * 2 : item.sets;
+    const sets: SetEntry[] = Array.from({ length: rows }, (_, k) => {
+      const p = prev?.sets[Math.min(k, prev.sets.length - 1)];
+      const base = p ? { reps: p.reps, weight: p.weight } : { ...fresh };
+      return ex.perSide ? { ...base, side: k % 2 === 0 ? 'L' : 'R' } : base;
+    });
     entries.push({
       exerciseId: id, sets, rest: item.rest,
-      target: `${item.sets} × ${item.reps}${item.reps === '1' ? '' : ' reps'}${ex.perSide ? ' per side' : ''}`,
+      target: item.reps === '1' ? `${item.sets} rounds` : `${item.sets} × ${item.reps} reps${ex.perSide ? ' per side' : ''}`,
       note: item.note,
     });
   }
   return db.workouts.add({ date: Date.now(), title: day.name, notes: '', entries, planId: plan.id, dayId: day.id } as Workout);
+}
+
+/** Muscles hit by a plan day: 1 = primary target of at least one exercise, 0.5 = only assisting. */
+export function dayIntensity(day: PlanDay): Partial<Record<Muscle, number>> {
+  const out: Partial<Record<Muscle, number>> = {};
+  for (const it of day.items) {
+    for (const [m, w] of Object.entries(EX(it.name).targets)) {
+      const v = (w ?? 0) >= 0.75 ? 1 : 0.5;
+      out[m as Muscle] = Math.max(out[m as Muscle] ?? 0, v);
+    }
+  }
+  return out;
 }
 
 // ---------- Next-up card (Training home) ----------
@@ -53,25 +71,59 @@ export async function startPlanDay(plan: Plan, day: PlanDay): Promise<number> {
 export function NextUpCard({ onStart }: { onStart: (workoutId: number) => void }) {
   const nav = useNav();
   const next = useLive(() => nextPlanDay(), [], null as Awaited<ReturnType<typeof nextPlanDay>>);
-  if (!next) return null;
+  const intensity = next ? dayIntensity(next.day) : {};
+  const primary = PRIORITY.filter((m) => intensity[m] === 1);
   return (
-    <Section title="Next up" right={<button class="link small-link" onClick={() => nav.push(<PlansScreen />)}>All plans</button>}>
-      <div class="next-card">
-        <div class="next-head">
-          <div>
-            <div class="sub small">{next.plan.short} · Day {next.plan.days.indexOf(next.day) + 1} of {next.plan.days.length}</div>
-            <div class="next-title">{next.day.name}</div>
-            <div class="sub small">{next.day.focus}</div>
+    <div class="section">
+      <div class="bodymap-card">
+        {next ? (
+          <div class="next-head">
+            <div>
+              <div class="bm-kicker">Next up · {next.plan.short} · Day {next.plan.days.indexOf(next.day) + 1}/{next.plan.days.length}</div>
+              <div class="next-title">{next.day.name}</div>
+            </div>
+            <span class="pill dark-pill"><Ico icon={Timer} size={14} />{next.day.minutes} min</span>
           </div>
-          <span class="pill"><Ico icon={Timer} size={14} />{next.day.minutes} min</span>
-        </div>
+        ) : (
+          <div class="next-head"><div><div class="bm-kicker">No plan selected</div><div class="next-title">Pick a training plan</div></div></div>
+        )}
+        <BodyMap intensity={intensity} />
+        {next && (
+          <div class="bm-legend">
+            {primary.map((m) => <span class="bm-chip">{m}</span>)}
+            <span class="bm-key"><i class="hit" />Main</span><span class="bm-key"><i class="assist" />Assisting</span>
+          </div>
+        )}
         <div class="btn-row">
-          <button class="big-btn green" onClick={async () => onStart(await startPlanDay(next.plan, next.day))}><Ico icon={Play} size={20} />Start workout</button>
-          <button class="big-btn gray narrow" aria-label="Preview" onClick={() => nav.push(<DayScreen plan={next.plan} day={next.day} />)}><Ico icon={ClipboardList} size={20} /></button>
+          {next ? (
+            <>
+              <button class="big-btn green" onClick={async () => onStart(await startPlanDay(next.plan, next.day))}><Ico icon={Play} size={20} />Start workout</button>
+              <button class="big-btn gray narrow" aria-label="Preview workout" onClick={() => nav.push(<DayScreen plan={next.plan} day={next.day} />)}><Ico icon={ClipboardList} size={20} /></button>
+            </>
+          ) : (
+            <button class="big-btn green" onClick={() => nav.push(<PlansScreen />)}><Ico icon={ClipboardList} size={20} />Choose a plan</button>
+          )}
         </div>
       </div>
-    </Section>
+    </div>
   );
+}
+
+/** Label for the implement an exercise uses, with its fixed weight (e.g. "Barbell · 32,5 kg"). */
+export function equipmentTag(name: string, equipment: string, gear: Gear): { text: string; bodyweight: boolean; band: boolean } {
+  const lib = LIBRARY.find((l) => l.name === name);
+  const load = lib?.load ?? (/barbell/i.test(equipment) ? 'bar' : /dumbbell/i.test(equipment) ? 'db' : /kettlebell/i.test(equipment) ? 'kb'
+    : /band|cable/i.test(equipment) ? 'band' : /bodyweight|pull-up|ab wheel/i.test(equipment) ? 'bw' : null);
+  const eq = lib?.equipment ?? equipment;
+  switch (load) {
+    case 'bar': return { text: `Barbell · ${fmt(gear.barKg + SETUP.barPlates)} kg`, bodyweight: false, band: false };
+    case 'db': return { text: `${/dumbbells/i.test(eq) ? '2 × Dumbbell' : 'Dumbbell'} · ${fmt(gear.handleKg + SETUP.dbPlates)} kg`, bodyweight: false, band: false };
+    case 'kb': return { text: 'Kettlebell · 5 kg', bodyweight: false, band: false };
+    case 'band': return { text: /pull-up bar/i.test(eq) ? 'Band on pull-up bar' : 'Resistance band', bodyweight: false, band: true };
+    case 'ankle': return { text: 'Bodyweight (+ 1 kg ankle weights)', bodyweight: true, band: false };
+    case 'bw': return { text: 'Bodyweight', bodyweight: true, band: false };
+    default: return { text: equipment, bodyweight: false, band: false };
+  }
 }
 
 // ---------- Plans list ----------

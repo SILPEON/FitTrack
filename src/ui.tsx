@@ -128,13 +128,16 @@ export const Bar = ({ value, max, color }: { value: number; max: number; color: 
 // ---------- Inputs ----------
 
 /** Text input for numbers that accepts a comma or a dot and keeps half-typed values like "72,". */
-export function NumberInput({ value, onChange, placeholder, decimals = true, class: cls }: {
+export function NumberInput({ value, onChange, placeholder, decimals = true, class: cls, zeroAsEmpty }: {
   value: number | null | undefined; onChange: (v: number | null) => void; placeholder?: string; decimals?: boolean; class?: string;
+  /** Show 0 as an empty field so the placeholder (e.g. "bodyweight") is visible. */
+  zeroAsEmpty?: boolean;
 }) {
-  const [text, setText] = useState(fieldText(value));
+  const show = (v: number | null | undefined) => (zeroAsEmpty && v === 0 ? '' : fieldText(v));
+  const [text, setText] = useState(show(value));
   const focused = useRef(false);
   useEffect(() => {
-    if (!focused.current) setText(fieldText(value));
+    if (!focused.current) setText(show(value));
   }, [value]);
   return (
     <input
@@ -144,7 +147,7 @@ export function NumberInput({ value, onChange, placeholder, decimals = true, cla
       placeholder={placeholder}
       value={text}
       onFocus={(e) => { focused.current = true; (e.target as HTMLInputElement).select(); }}
-      onBlur={() => { focused.current = false; setText(fieldText(value)); }}
+      onBlur={() => { focused.current = false; setText(show(value)); }}
       onInput={(e) => {
         const t = (e.target as HTMLInputElement).value;
         setText(t);
