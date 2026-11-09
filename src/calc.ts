@@ -1,4 +1,5 @@
 import type { Activity, ActivityLevel, Profile, Pt } from './db';
+import { Bike, Footprints, SportShoe, type LucideIcon } from 'lucide-preact';
 
 // ---------- Formatting & parsing ----------
 
@@ -131,10 +132,10 @@ export function targets(p: Profile, kg: number): Targets {
 
 // ---------- Geo ----------
 
-export const ACTIVITIES: { key: Activity; label: string; icon: string; speedKmh: number }[] = [
-  { key: 'walk', label: 'Walk', icon: '🚶', speedKmh: 5 },
-  { key: 'run', label: 'Run', icon: '🏃', speedKmh: 10 },
-  { key: 'bike', label: 'Bike', icon: '🚴', speedKmh: 20 },
+export const ACTIVITIES: { key: Activity; label: string; icon: LucideIcon; speedKmh: number }[] = [
+  { key: 'walk', label: 'Walk', icon: Footprints, speedKmh: 5 },
+  { key: 'run', label: 'Run', icon: SportShoe, speedKmh: 10 },
+  { key: 'bike', label: 'Bike', icon: Bike, speedKmh: 20 },
 ];
 export const activityInfo = (a: Activity) => ACTIVITIES.find((x) => x.key === a) ?? ACTIVITIES[0];
 

@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { db, exportBackup, getProfile, importBackup, saveProfile, DEFAULT_PROFILE, type Profile, type WeightEntry } from '../db';
 import { ACTIVITY_LEVELS, age, bmi, bmiCategory, dayKey, fmt, fmtDate, healthyRange, shareFile, targets } from '../calc';
-import { NumberInput, Page, Row, Section, Segmented, useLive } from '../ui';
+import { ActionRow, NumberInput, Page, Row, Section, Segmented, useLive } from '../ui';
+import { Download, Minus, Plus, TriangleExclamationPoint, Upload } from 'lucide-preact';
+import { Ico } from '../icons';
 
 export function ProfileHome() {
   const stored = useLive(() => getProfile(), [], null as Profile | null);
@@ -85,7 +87,7 @@ export function ProfileHome() {
           <Section title="Daily energy">
             <Row label="BMR (at rest)" value={`${fmt(t.bmr, 0)} kcal`} />
             <Row label="Maintenance" value={`${fmt(t.tdee, 0)} kcal`} />
-            <Row label="Your target" value={<b class="accent">{fmt(t.calories, 0)} kcal</b>} />
+            <Row label="Your target" value={<b class="grad-text big-value">{fmt(t.calories, 0)} kcal</b>} />
             {p.goal !== 'maintain' && p.weeklyKg > 0 && (() => {
               const weeks = Math.abs(latest.kg - p.targetKg) / p.weeklyKg;
               return (
@@ -104,7 +106,7 @@ export function ProfileHome() {
           </Section>
           {t.warnings.length > 0 && (
             <Section title="Heads up">
-              {t.warnings.map((w) => <Row><span class="warn small">⚠️ {w}</span></Row>)}
+              {t.warnings.map((w) => <Row><Ico icon={TriangleExclamationPoint} size={18} class="warn" /><span class="warn small row-main">{w}</span></Row>)}
             </Section>
           )}
         </>
@@ -136,8 +138,8 @@ function Stepper({ label, value, step, min, max, display, onChange }: {
       <span class="row-main">{label}</span>
       <span class="row-value">{display}</span>
       <span class="stepper">
-        <button onClick={() => onChange(clamp(value - step))} disabled={value <= min}>−</button>
-        <button onClick={() => onChange(clamp(value + step))} disabled={value >= max}>＋</button>
+        <button onClick={() => onChange(clamp(value - step))} disabled={value <= min} aria-label="Decrease"><Ico icon={Minus} size={18} /></button>
+        <button onClick={() => onChange(clamp(value + step))} disabled={value >= max} aria-label="Increase"><Ico icon={Plus} size={18} /></button>
       </span>
     </Row>
   );
@@ -174,8 +176,8 @@ function BackupSection() {
       footer="All data is stored only on this phone, inside this home-screen app. Deleting the app icon deletes the data. Save a backup to Files or iCloud Drive regularly.">
       <Row label="Last backup" value={lastBackup ? fmtDate(lastBackup) : 'Never'} sub={stale ? <span class="warn">Older than 2 weeks: back up soon</span> : undefined} />
       {persisted != null && <Row label="Protected from automatic cleanup" value={persisted ? 'Yes' : 'No'} />}
-      <Row onClick={doExport}><span class="accent">⬆︎ Save backup…</span></Row>
-      <Row onClick={() => fileRef.current?.click()}><span class="accent">⬇︎ Restore from backup…</span></Row>
+      <ActionRow icon={Upload} label="Save backup…" onClick={doExport} />
+      <ActionRow icon={Download} label="Restore from backup…" onClick={() => fileRef.current?.click()} />
       <input ref={fileRef} type="file" accept="application/json,.json" style={{ display: 'none' }}
         onChange={(e) => { const f = (e.target as HTMLInputElement).files?.[0]; if (f) doImport(f); (e.target as HTMLInputElement).value = ''; }} />
     </Section>

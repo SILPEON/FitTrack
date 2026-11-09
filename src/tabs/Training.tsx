@@ -1,7 +1,9 @@
 import { useMemo, useState } from 'preact/hooks';
 import { db, MUSCLES, type Exercise, type Workout, type WorkoutEntry } from '../db';
 import { fmt, fmtDate, oneRepMax, toLocalInput } from '../calc';
-import { ActionSheet, Empty, LineChart, NumberInput, Page, Row, Section, Sheet, useLive, useNav } from '../ui';
+import { ActionSheet, ActionRow, Empty, LineChart, NumberInput, Page, Row, Section, Sheet, useLive, useNav } from '../ui';
+import { BookOpen, Dumbbell, Ellipsis, Plus, SearchX, Trash, X } from 'lucide-preact';
+import { Ico } from '../icons';
 
 const useExerciseMap = () => {
   const list = useLive(() => db.exercises.toArray(), [], [] as Exercise[]);
@@ -40,12 +42,15 @@ export function TrainingHome() {
   };
 
   return (
-    <Page title="Training" actions={<button class="link big" onClick={() => newWorkout()}>＋</button>}>
+    <Page title="Training" actions={<button class="icon-link" aria-label="New workout" onClick={() => newWorkout()}><Ico icon={Plus} size={26} grad="main" /></button>}>
       <Section>
-        <Row label="📚 Exercise Library" chevron onClick={() => nav.push(<ExerciseLibrary />)} />
+        <Row chevron onClick={() => nav.push(<ExerciseLibrary />)}>
+          <span class="icon-badge"><Ico icon={BookOpen} size={18} /></span>
+          <span class="row-main">Exercise Library</span>
+        </Row>
       </Section>
       <Section title="Workouts">
-        {workouts.length === 0 && <Empty icon="🏋️" title="No workouts yet" text="Tap ＋ to log your first workout." />}
+        {workouts.length === 0 && <Empty icon={Dumbbell} title="No workouts yet" text="Tap + to log your first workout." />}
         {workouts.map((w) => (
           <Row key={w.id} onClick={() => nav.push(<WorkoutScreen id={w.id} />)}>
             <div class="row-main">
@@ -53,7 +58,7 @@ export function TrainingHome() {
               <div class="sub clamp2">{w.entries.map((e) => exMap.get(e.exerciseId)?.name ?? 'Deleted exercise').join(' · ')}</div>
               <div class="sub small">{setCount(w)} sets · {fmt(volume(w), 0)} kg volume</div>
             </div>
-            <span class="icon-btn" onClick={(e) => { e.stopPropagation(); setMenuFor(w); }}>⋯</span>
+            <span class="icon-btn" onClick={(e) => { e.stopPropagation(); setMenuFor(w); }}><Ico icon={Ellipsis} size={20} /></span>
           </Row>
         ))}
       </Section>
@@ -108,7 +113,7 @@ function WorkoutScreen({ id }: { id: number }) {
         const prev = previousEntry(all, entry.exerciseId, workout.date, id);
         return (
           <Section key={ei} title={ex?.name ?? 'Deleted exercise'}
-            right={<button class="link" onClick={() => setMenuIndex(ei)}>⋯</button>}>
+            right={<button class="icon-link" aria-label="Exercise options" onClick={() => setMenuIndex(ei)}><Ico icon={Ellipsis} size={20} grad="main" /></button>}>
             {prev && <div class="hint">Last time ({fmtDate(prev.w.date)}): {summary(prev.e)}</div>}
             <div class="set-head"><span>Set</span><span>Reps</span><span>kg</span><span /></div>
             {entry.sets.map((s, si) => (
@@ -117,19 +122,19 @@ function WorkoutScreen({ id }: { id: number }) {
                 <NumberInput value={s.reps} decimals={false} onChange={(v) => setEntries((en) => { en[ei].sets[si].reps = Math.round(v ?? 0); })} />
                 <NumberInput value={s.weight} onChange={(v) => setEntries((en) => { en[ei].sets[si].weight = v ?? 0; })} />
                 <button class="icon-btn danger" aria-label="Delete set"
-                  onClick={() => setEntries((en) => { en[ei].sets.splice(si, 1); })}>✕</button>
+                  onClick={() => setEntries((en) => { en[ei].sets.splice(si, 1); })}><Ico icon={X} size={16} /></button>
               </div>
             ))}
-            <Row onClick={() => setEntries((en) => {
+            <ActionRow icon={Plus} label="Add set" onClick={() => setEntries((en) => {
               const last = en[ei].sets[en[ei].sets.length - 1];
               en[ei].sets.push(last ? { ...last } : { reps: 10, weight: 0 });
-            })}><span class="accent">＋ Add set</span></Row>
+            })} />
           </Section>
         );
       })}
 
       <Section>
-        <Row onClick={() => setPicker(true)}><span class="accent">＋ Add exercise</span></Row>
+        <ActionRow icon={Plus} label="Add exercise" bold onClick={() => setPicker(true)} />
       </Section>
 
       <Section title="Notes">
@@ -143,9 +148,7 @@ function WorkoutScreen({ id }: { id: number }) {
       </Section>
 
       <Section>
-        <Row onClick={() => { if (confirm('Delete this workout?')) { db.workouts.delete(id); nav.pop(); } }}>
-          <span class="danger-text">Delete workout</span>
-        </Row>
+        <ActionRow icon={Trash} danger label="Delete workout" onClick={() => { if (confirm('Delete this workout?')) { db.workouts.delete(id); nav.pop(); } }} />
       </Section>
 
       <Sheet open={picker} onClose={() => setPicker(false)} title="Add Exercise">
@@ -181,8 +184,8 @@ function ExerciseList({ onPick }: { onPick: (e: Exercise) => void }) {
         <button class={!muscle ? 'chip active' : 'chip'} onClick={() => setMuscle(null)}>All</button>
         {MUSCLES.map((m) => <button class={muscle === m ? 'chip active' : 'chip'} onClick={() => setMuscle(m)}>{m}</button>)}
       </div>
-      <Section><Row onClick={() => setAdding(true)}><span class="accent">＋ New custom exercise</span></Row></Section>
-      {groups.length === 0 && <Empty icon="🔍" title="No exercises found" />}
+      <Section><ActionRow icon={Plus} label="New custom exercise" onClick={() => setAdding(true)} /></Section>
+      {groups.length === 0 && <Empty icon={SearchX} title="No exercises found" />}
       {groups.map((g) => (
         <Section key={g.m} title={g.m}>
           {g.items.map((e) => (
@@ -268,8 +271,7 @@ function ExerciseDetail({ id }: { id: number }) {
       </Section>
       <Section footer="1RM is estimated with the Epley formula: weight × (1 + reps ÷ 30). It gets less accurate above about 10 reps.">
         {ex.custom
-          ? <Row onClick={() => { if (confirm('Delete this exercise? Logged sets stay in your workouts.')) { db.exercises.delete(id); nav.pop(); } }}>
-              <span class="danger-text">Delete custom exercise</span></Row>
+          ? <ActionRow icon={Trash} danger label="Delete custom exercise" onClick={() => { if (confirm('Delete this exercise? Logged sets stay in your workouts.')) { db.exercises.delete(id); nav.pop(); } }} />
           : <Row><span class="sub">Built-in exercise</span></Row>}
       </Section>
     </Page>

@@ -2,6 +2,8 @@ import { createContext, type ComponentChildren, type VNode } from 'preact';
 import { useContext, useEffect, useRef, useState } from 'preact/hooks';
 import { liveQuery } from 'dexie';
 import { fmt, parseNum } from './calc';
+import { ChevronLeft, ChevronRight, type LucideIcon } from 'lucide-preact';
+import { Ico, type Grad } from './icons';
 
 /** Number for an editable field: locale decimal separator, no thousands grouping. */
 const fieldText = (v: number | null | undefined) =>
@@ -50,7 +52,7 @@ export function Page({ title, actions, left, children, noScroll }: {
     <div class="page">
       <header class="topbar">
         <div class="topbar-side">
-          {left ?? (nav.depth > 0 && <button class="link back" onClick={nav.pop}>‹ Back</button>)}
+          {left ?? (nav.depth > 0 && <button class="link back" onClick={nav.pop}><Ico icon={ChevronLeft} size={24} />Back</button>)}
         </div>
         <h1>{title}</h1>
         <div class="topbar-side right">{actions}</div>
@@ -88,13 +90,23 @@ export const Row = ({ label, value, sub, onClick, chevron, children, class: cls 
           {value != null && <div class="row-value">{value}</div>}
         </>
       )}
-      {chevron && <span class="chevron">›</span>}
+      {chevron && <Ico icon={ChevronRight} size={18} class="chevron" />}
     </Tag>
   );
 };
 
-export const Empty = ({ icon, title, text }: { icon: string; title: string; text?: string }) => (
-  <div class="empty"><div class="empty-icon">{icon}</div><div class="empty-title">{title}</div>{text && <div class="sub">{text}</div>}</div>
+/** Tappable row with a gradient icon, used for actions like "Add set". */
+export const ActionRow = ({ icon, label, onClick, danger, grad = 'main', bold }: {
+  icon: LucideIcon; label: ComponentChildren; onClick: () => void; danger?: boolean; grad?: Grad; bold?: boolean;
+}) => (
+  <button class="row tappable action-row" onClick={onClick}>
+    <Ico icon={icon} size={20} grad={danger ? undefined : grad} class={danger ? 'danger-text' : ''} />
+    <span class={`${danger ? 'danger-text' : 'accent'} ${bold ? 'bold' : ''}`}>{label}</span>
+  </button>
+);
+
+export const Empty = ({ icon, title, text }: { icon: LucideIcon; title: string; text?: string }) => (
+  <div class="empty"><div class="empty-icon"><Ico icon={icon} size={44} grad="main" strokeWidth={1.5} /></div><div class="empty-title">{title}</div>{text && <div class="sub">{text}</div>}</div>
 );
 
 export function Segmented<T extends string>({ value, options, onChange }: {
@@ -196,10 +208,20 @@ export function LineChart({ points, target, height = 200, unit = '' }: {
   const sx = (x: number) => padL + ((x - minX) / Math.max(maxX - minX, 1)) * (W - padL - padR);
   const sy = (y: number) => padT + (1 - (y - minY) / (maxY - minY)) * (H - padT - padB);
   const d = points.map((p, i) => `${i ? 'L' : 'M'}${sx(p.x).toFixed(1)},${sy(p.y).toFixed(1)}`).join(' ');
+  const area = `${d} L${sx(points[points.length - 1].x).toFixed(1)},${H - padB} L${sx(points[0].x).toFixed(1)},${H - padB} Z`;
+  const id = `c${Math.round(minX % 1e6)}${points.length}`;
   const ticks = [maxY - (maxY - minY) * 0.1, (maxY + minY) / 2, minY + (maxY - minY) * 0.1];
   const dateLabel = (x: number) => new Date(x).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
   return (
     <svg class="chart" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{ height: `${H}px` }}>
+      <defs>
+        <linearGradient id={`${id}-l`} gradientUnits="userSpaceOnUse" x1={padL} y1="0" x2={W - padR} y2="0">
+          <stop offset="0" stop-color="#36c6ff" /><stop offset="0.5" stop-color="#8b5cf6" /><stop offset="1" stop-color="#ff4f9a" />
+        </linearGradient>
+        <linearGradient id={`${id}-a`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#8b5cf6" stop-opacity="0.28" /><stop offset="1" stop-color="#8b5cf6" stop-opacity="0" />
+        </linearGradient>
+      </defs>
       {ticks.map((t) => (
         <g>
           <line x1={padL} x2={W - padR} y1={sy(t)} y2={sy(t)} class="grid" />
@@ -212,8 +234,10 @@ export function LineChart({ points, target, height = 200, unit = '' }: {
           <text x={W - padR} y={sy(target) - 4} text-anchor="end" class="target-label">Goal {fmt(target)}{unit}</text>
         </g>
       )}
-      <path d={d} class="line" />
-      {points.length <= 60 && points.map((p) => <circle cx={sx(p.x)} cy={sy(p.y)} r={2.6} class="dot" />)}
+      <path d={area} fill={`url(#${id}-a)`} stroke="none" />
+      <path d={d} class="line" stroke={`url(#${id}-l)`} />
+      {points.length <= 60 && points.map((p) => <circle cx={sx(p.x)} cy={sy(p.y)} r={2.8} class="dot" fill={`url(#${id}-l)`} />)}
+      {(() => { const p = points[points.length - 1]; return <circle cx={sx(p.x)} cy={sy(p.y)} r={4.5} class="dot-last" />; })()}
       <text x={padL} y={H - 6} class="axis">{dateLabel(minX)}</text>
       <text x={W - padR} y={H - 6} text-anchor="end" class="axis">{dateLabel(maxX)}</text>
     </svg>

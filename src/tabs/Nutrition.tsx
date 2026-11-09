@@ -1,7 +1,9 @@
 import { useEffect, useState } from 'preact/hooks';
 import { db, getProfile, MEALS, type Food, type FoodLog, type Meal, type Profile, type WeightEntry } from '../db';
 import { dayKey, fmt, shiftDay, targets, type Targets } from '../calc';
-import { Bar, NumberInput, Page, Row, Section, Segmented, Sheet, useLive } from '../ui';
+import { ActionRow, Bar, NumberInput, Page, Row, Section, Segmented, Sheet, useLive } from '../ui';
+import { ChevronLeft, ChevronRight, Plus, ScanBarcode, Trash } from 'lucide-preact';
+import { Ico } from '../icons';
 import type { BarcodeScanner as ScannerType } from '../scanner';
 import { lookupBarcode } from '../off';
 
@@ -36,14 +38,14 @@ export function NutritionHome() {
   const totals = sum(entries);
 
   return (
-    <Page title="Nutrition" actions={<button class="link big" aria-label="Scan barcode" onClick={() => setScanning(true)}>📷</button>}>
+    <Page title="Nutrition" actions={<button class="icon-link" aria-label="Scan barcode" onClick={() => setScanning(true)}><Ico icon={ScanBarcode} size={26} grad="main" /></button>}>
       <div class="day-nav">
-        <button class="link big" onClick={() => setDay(shiftDay(day, -1))}>‹</button>
+        <button class="icon-link" aria-label="Previous day" onClick={() => setDay(shiftDay(day, -1))}><Ico icon={ChevronLeft} size={26} grad="main" /></button>
         <label class="day-label">
           {dayLabel(day)}
           <input type="date" value={day} onChange={(e) => setDay((e.target as HTMLInputElement).value || dayKey())} />
         </label>
-        <button class="link big" onClick={() => setDay(shiftDay(day, 1))}>›</button>
+        <button class="icon-link" aria-label="Next day" onClick={() => setDay(shiftDay(day, 1))}><Ico icon={ChevronRight} size={26} grad="main" /></button>
       </div>
 
       <Section>
@@ -51,16 +53,16 @@ export function NutritionHome() {
           {t ? (
             <>
               <div class="hero">
-                <div><span class="hero-num">{fmt(totals.kcal, 0)}</span><span class="hero-unit"> / {fmt(t.calories, 0)} kcal</span></div>
+                <div><span class="hero-num grad-text">{fmt(totals.kcal, 0)}</span><span class="hero-unit"> / {fmt(t.calories, 0)} kcal</span></div>
                 <div class={t.calories - totals.kcal >= 0 ? 'good bold' : 'bad bold'}>
                   {t.calories - totals.kcal >= 0 ? `${fmt(t.calories - totals.kcal, 0)} left` : `${fmt(totals.kcal - t.calories, 0)} over`}
                 </div>
               </div>
-              <Bar value={totals.kcal} max={t.calories} color={totals.kcal <= t.calories ? 'var(--green)' : 'var(--red)'} />
-              <Macro label="Protein" v={totals.protein} max={t.protein} color="var(--blue)" />
-              <Macro label="Carbs" v={totals.carbs} max={t.carbs} color="var(--orange)" />
-              <Macro label="Fat" v={totals.fat} max={t.fat} color="var(--pink)" />
-              <Macro label="Fiber" v={totals.fiber} max={t.fiber} color="var(--brown)" />
+              <Bar value={totals.kcal} max={t.calories} color={totals.kcal <= t.calories ? 'var(--grad-main)' : 'var(--grad-over)'} />
+              <Macro label="Protein" v={totals.protein} max={t.protein} color="var(--grad-cool)" />
+              <Macro label="Carbs" v={totals.carbs} max={t.carbs} color="var(--grad-warm)" />
+              <Macro label="Fat" v={totals.fat} max={t.fat} color="var(--grad-pink)" />
+              <Macro label="Fiber" v={totals.fiber} max={t.fiber} color="var(--grad-fresh)" />
             </>
           ) : (
             <>
@@ -81,7 +83,7 @@ export function NutritionHome() {
                 sub={`${fmt(e.grams, 0)} ${e.unit ?? 'g'} · P ${fmt(e.protein, 0)} · C ${fmt(e.carbs, 0)} · F ${fmt(e.fat, 0)}`}
                 value={`${fmt(e.kcal, 0)} kcal`} />
             ))}
-            <Row onClick={() => setAddMeal(m.key)}><span class="accent">＋ Add food</span></Row>
+            <ActionRow icon={Plus} label="Add food" onClick={() => setAddMeal(m.key)} />
           </Section>
         );
       })}
@@ -119,7 +121,7 @@ function AddFood({ meal, day, onClose }: { meal: Meal; day: string; onClose: () 
         <Segmented value={mode} onChange={setMode} options={[{ key: 'db', label: 'Food database' }, { key: 'manual', label: 'Manual entry' }]} />
       </div>
       {mode === 'db' && (
-        <Section><Row onClick={() => setScan(true)}><span class="accent bold">📷 Scan barcode</span></Row></Section>
+        <Section><ActionRow icon={ScanBarcode} label="Scan barcode" bold onClick={() => setScan(true)} /></Section>
       )}
       {mode === 'db' ? <FoodSearch onPick={setPicked} /> : <ManualFood meal={meal} day={day} onDone={onClose} />}
     </Sheet>
@@ -201,9 +203,7 @@ function FoodAmount({ food, meal: initialMeal, day, onBack, onDone, chooseMeal }
       <Section footer={food.barcode ? 'Product data from Open Food Facts (community-maintained). Check it against the label the first time; if it is wrong, delete it below and enter it manually.' : undefined}>
         <Row onClick={add}><span class="accent bold">Add to {MEALS.find((m) => m.key === meal)!.label}</span></Row>
         {food.custom && (
-          <Row onClick={async () => { if (confirm(`Delete "${food.name}" from your foods?`)) { await db.foods.delete(food.id); onBack(); } }}>
-            <span class="danger-text">Delete from my foods</span>
-          </Row>
+          <ActionRow icon={Trash} danger label="Delete from my foods" onClick={async () => { if (confirm(`Delete "${food.name}" from your foods?`)) { await db.foods.delete(food.id); onBack(); } }} />
         )}
       </Section>
     </Sheet>
@@ -349,7 +349,7 @@ function EditEntry({ entry, onClose }: { entry: FoodLog; onClose: () => void }) 
         <Row label="Fat" value={`${fmt(entry.fat * k)} g`} />
       </Section>
       <Section>
-        <Row onClick={async () => { await db.foodLog.delete(entry.id); onClose(); }}><span class="danger-text">Delete entry</span></Row>
+        <ActionRow icon={Trash} danger label="Delete entry" onClick={async () => { await db.foodLog.delete(entry.id); onClose(); }} />
       </Section>
     </Sheet>
   );

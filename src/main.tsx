@@ -9,15 +9,17 @@ import { NutritionHome } from './tabs/Nutrition';
 import { RoutesHome } from './tabs/Routes';
 import { ProfileHome } from './tabs/Profile';
 import { recorder } from './recorder';
+import { Dumbbell, Map as MapIcon, Scale, UserRound, Utensils, type LucideIcon } from 'lucide-preact';
+import { GradientDefs, Ico } from './icons';
 
 type TabKey = 'training' | 'weight' | 'nutrition' | 'routes' | 'profile';
 
-const TABS: { key: TabKey; label: string; icon: string; root: () => preact.VNode }[] = [
-  { key: 'training', label: 'Training', icon: '🏋️', root: () => <TrainingHome /> },
-  { key: 'weight', label: 'Weight', icon: '⚖️', root: () => <WeightHome /> },
-  { key: 'nutrition', label: 'Nutrition', icon: '🍽️', root: () => <NutritionHome /> },
-  { key: 'routes', label: 'Routes', icon: '🗺️', root: () => <RoutesHome /> },
-  { key: 'profile', label: 'Profile', icon: '👤', root: () => <ProfileHome /> },
+const TABS: { key: TabKey; label: string; icon: LucideIcon; root: () => preact.VNode }[] = [
+  { key: 'training', label: 'Training', icon: Dumbbell, root: () => <TrainingHome /> },
+  { key: 'weight', label: 'Weight', icon: Scale, root: () => <WeightHome /> },
+  { key: 'nutrition', label: 'Nutrition', icon: Utensils, root: () => <NutritionHome /> },
+  { key: 'routes', label: 'Routes', icon: MapIcon, root: () => <RoutesHome /> },
+  { key: 'profile', label: 'Profile', icon: UserRound, root: () => <ProfileHome /> },
 ];
 
 function App() {
@@ -30,6 +32,7 @@ function App() {
   };
   return (
     <div class="app">
+      <GradientDefs />
       <div class="tabs-body">
         {TABS.map((t) => (
           <div key={t.key} class="tab-panel" style={{ display: t.key === tab ? 'flex' : 'none' }}>
@@ -40,7 +43,7 @@ function App() {
       <nav class="tabbar">
         {TABS.map((t) => (
           <button key={t.key} class={t.key === tab ? 'active' : ''} onClick={() => select(t.key)}>
-            <span class="tab-icon">{t.icon}</span>
+            <Ico icon={t.icon} size={24} grad={t.key === tab ? 'main' : undefined} strokeWidth={t.key === tab ? 2.2 : 1.8} />
             <span>{t.label}</span>
           </button>
         ))}
