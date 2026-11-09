@@ -1,7 +1,7 @@
 import { useState } from 'preact/hooks';
 import { CalendarDays, ChevronDown, ChevronUp, ClipboardList, Dumbbell, Info, Play, ShieldCheck, Star, Timer } from 'lucide-preact';
 import { db, type Exercise, type SetEntry, type Workout, type WorkoutEntry } from '../db';
-import { BodyMap } from '../bodymap';
+import { BodyMap, IntensityLegend } from '../bodymap';
 import { fmt } from '../calc';
 import { DEFAULT_GEAR, EX, LIBRARY, PLANS, PLATES, PRINCIPLES, PRIORITY, SETUP, defaultLoad, weeklyVolume, type Gear, type Muscle, type Plan, type PlanDay } from '../plans';
 import { Ico } from '../icons';
@@ -54,15 +54,22 @@ export async function startPlanDay(plan: Plan, day: PlanDay): Promise<number> {
   return db.workouts.add({ date: Date.now(), title: day.name, notes: '', entries, planId: plan.id, dayId: day.id } as Workout);
 }
 
-/** Muscles hit by a plan day: 1 = primary target of at least one exercise, 0.5 = only assisting. */
+/**
+ * How hard each muscle is worked in a plan day: sum of sets × involvement, scaled so the
+ * most-worked muscle = 1. Muscles that only assist end up with low values.
+ */
 export function dayIntensity(day: PlanDay): Partial<Record<Muscle, number>> {
-  const out: Partial<Record<Muscle, number>> = {};
+  const raw: Partial<Record<Muscle, number>> = {};
   for (const it of day.items) {
-    for (const [m, w] of Object.entries(EX(it.name).targets)) {
-      const v = (w ?? 0) >= 0.75 ? 1 : 0.5;
-      out[m as Muscle] = Math.max(out[m as Muscle] ?? 0, v);
-    }
+    for (const [m, w] of Object.entries(EX(it.name).targets)) raw[m as Muscle] = (raw[m as Muscle] ?? 0) + it.sets * (w ?? 0);
   }
+  return normalise(raw);
+}
+
+export function normalise(raw: Partial<Record<Muscle, number>>) {
+  const max = Math.max(0, ...Object.values(raw).map((v) => v ?? 0));
+  const out: Partial<Record<Muscle, number>> = {};
+  if (max > 0) for (const [m, v] of Object.entries(raw)) out[m as Muscle] = Math.max(0.12, (v ?? 0) / max);
   return out;
 }
 
@@ -72,7 +79,7 @@ export function NextUpCard({ onStart }: { onStart: (workoutId: number) => void }
   const nav = useNav();
   const next = useLive(() => nextPlanDay(), [], null as Awaited<ReturnType<typeof nextPlanDay>>);
   const intensity = next ? dayIntensity(next.day) : {};
-  const primary = PRIORITY.filter((m) => intensity[m] === 1);
+  const primary = PRIORITY.filter((m) => (intensity[m] ?? 0) >= 0.3);
   return (
     <div class="section">
       <div class="bodymap-card">
@@ -91,7 +98,7 @@ export function NextUpCard({ onStart }: { onStart: (workoutId: number) => void }
         {next && (
           <div class="bm-legend">
             {primary.map((m) => <span class="bm-chip">{m}</span>)}
-            <span class="bm-key"><i class="hit" />Main</span><span class="bm-key"><i class="assist" />Assisting</span>
+            <IntensityLegend />
           </div>
         )}
         <div class="btn-row">

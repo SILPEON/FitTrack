@@ -4,10 +4,10 @@ import { fmt, fmtDate, fmtDuration, oneRepMax, toLocalInput } from '../calc';
 import { ActionSheet, ActionRow, Empty, LineChart, NumberInput, Page, Row, Section, Sheet, useLive, useNav } from '../ui';
 import { BookOpen, Dumbbell, Ellipsis, Plus, SearchX, Trash, X } from 'lucide-preact';
 import { Ico } from '../icons';
-import { NextUpCard, PlansScreen, equipmentTag, getGear } from './Plans';
-import { BodyMap } from '../bodymap';
+import { NextUpCard, PlansScreen, equipmentTag, getGear, normalise } from './Plans';
+import { BodyMap, IntensityLegend } from '../bodymap';
 import { DEFAULT_GEAR, LIBRARY, type Muscle } from '../plans';
-import { Check, ChevronDown, ChevronUp, CircleCheck, ClipboardList, Info, Medal, PersonStanding, Timer, Trophy } from 'lucide-preact';
+import { Check, PenLine, ChevronDown, ChevronUp, CircleCheck, ClipboardList, Info, Medal, PersonStanding, Timer, Trophy } from 'lucide-preact';
 import { restTimer } from '../restTimer';
 
 const useExerciseMap = () => {
@@ -105,6 +105,7 @@ function WorkoutScreen({ id }: { id: number }) {
   /** undefined = automatic (first exercise not yet done), null = all folded. */
   const [openIdx, setOpenIdx] = useState<number | null | undefined>(undefined);
   const [showSummary, setSummary] = useState(false);
+  const [details, setDetails] = useState(false);
 
   if (!workout) return <Page title="Workout"><div /></Page>;
 
@@ -149,16 +150,21 @@ function WorkoutScreen({ id }: { id: number }) {
   };
 
   return (
-    <Page title={workout.title || 'Workout'}>
-      <Section>
-        <Row><input class="text-input" value={workout.title} placeholder="Workout name"
-          onInput={(e) => save({ title: (e.target as HTMLInputElement).value })} /></Row>
-        <Row>
-          <span class="row-main">Started</span>
-          <input type="datetime-local" class="date-input" value={toLocalInput(workout.date)}
-            onChange={(e) => { const v = (e.target as HTMLInputElement).value; if (v) save({ date: new Date(v).getTime() }); }} />
-        </Row>
-      </Section>
+    <Page title={workout.title || 'Workout'}
+      actions={<button class="icon-link" aria-label="Workout name and start time" onClick={() => setDetails(true)}><Ico icon={PenLine} size={22} grad="main" /></button>}>
+      <Sheet open={details} onClose={() => setDetails(false)} title="Workout details"
+        actions={<button class="link bold" onClick={() => setDetails(false)}>Done</button>}>
+        <Section>
+          <Row><input class="text-input" value={workout.title} placeholder="Workout name"
+            onInput={(e) => save({ title: (e.target as HTMLInputElement).value })} /></Row>
+          <Row>
+            <span class="row-main">Started</span>
+            <input type="datetime-local" class="date-input" value={toLocalInput(workout.date)}
+              onChange={(e) => { const v = (e.target as HTMLInputElement).value; if (v) save({ date: new Date(v).getTime() }); }} />
+          </Row>
+        </Section>
+      </Sheet>
+      <div class="workout-meta sub small">Started {fmtDate(workout.date, true)}</div>
 
       {workout.entries.map((entry, ei) => {
         const ex = exMap.get(entry.exerciseId);
@@ -321,12 +327,14 @@ function WorkoutSummary({ workout, all, exMap, onClose, onBack }: {
     }
   }
 
-  const intensity: Partial<Record<Muscle, number>> = {};
+  const raw: Partial<Record<Muscle, number>> = {};
   for (const e of workout.entries) {
     const lib = LIBRARY.find((l) => l.name === exMap.get(e.exerciseId)?.name);
-    if (!lib || !counted(e).length) continue;
-    for (const [m, w] of Object.entries(lib.targets)) intensity[m as Muscle] = Math.max(intensity[m as Muscle] ?? 0, (w ?? 0) >= 0.75 ? 1 : 0.5);
+    const n = counted(e).length / (lib?.perSide ? 2 : 1);
+    if (!lib || !n) continue;
+    for (const [m, w] of Object.entries(lib.targets)) raw[m as Muscle] = (raw[m as Muscle] ?? 0) + n * (w ?? 0);
   }
+  const intensity = normalise(raw);
   const hasMap = Object.keys(intensity).length > 0;
 
   return (
@@ -347,7 +355,7 @@ function WorkoutSummary({ workout, all, exMap, onClose, onBack }: {
           {prs.map((p) => <Row><Ico icon={Medal} size={20} grad="warm" /><span class="row-main">{p.name}</span><span class="row-value strong">{p.text}</span></Row>)}
         </Section>
       )}
-      {hasMap && <div class="section"><div class="bodymap-card"><div class="bm-kicker">Muscles trained</div><BodyMap intensity={intensity} /></div></div>}
+      {hasMap && <div class="section"><div class="bodymap-card"><div class="bm-kicker">Muscles trained</div><BodyMap intensity={intensity} /><div class="bm-legend"><IntensityLegend /></div></div></div>}
       <Section title="Exercises">
         {workout.entries.map((e) => (
           <Row label={<span class="inline-icon">{e.done ? <Ico icon={CircleCheck} size={16} grad="fresh" /> : <Ico icon={X} size={16} class="sub" />}{exMap.get(e.exerciseId)?.name ?? 'Exercise'}</span>}
@@ -506,7 +514,7 @@ function RestButton({ timerKey, done, seconds, label, onDone }: {
       style={mine ? { '--p': `${pct * 360}deg` } as Record<string, string> : undefined}>
       {mine
         ? <span class="rest-num">{left}</span>
-        : <Ico icon={done ? Check : Timer} size={18} />}
+        : done ? <Ico icon={Check} size={20} strokeWidth={3} grad="fresh" /> : <Ico icon={Timer} size={18} />}
     </button>
   );
 }
