@@ -34,6 +34,17 @@ jobs:
           fi
           test -d build/Release-iphoneos/FitTrack.app
 
+      - name: Verify build
+        shell: bash
+        run: |
+          grep -q "BUILD SUCCEEDED" build.log && echo "BUILD SUCCEEDED"
+          echo "Warnings: $(grep -E 'warning:' build.log | grep -v 'ld: warning' | sort -u | wc -l)"
+          grep -E "\.swift:[0-9]+:[0-9]+: warning:" build.log | sed 's|.*/FitTrack/FitTrack/||' | sort -u | head -60
+          APP=build/Release-iphoneos/FitTrack.app
+          ls -la "$APP"
+          file "$APP/FitTrack"
+          plutil -p "$APP/Info.plist" | grep -E -A2 "UIBackgroundModes|NSLocation|CFBundleIdentifier|MinimumOSVersion|CFBundleIcon"
+
       - name: Package IPA
         run: |
           mkdir Payload
