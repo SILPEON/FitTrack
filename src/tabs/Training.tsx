@@ -6,7 +6,8 @@ import { BookOpen, Dumbbell, Ellipsis, Plus, SearchX, Trash, X } from 'lucide-pr
 import { Ico } from '../icons';
 import { NextUpCard, PlansScreen } from './Plans';
 import { LIBRARY } from '../plans';
-import { ClipboardList, Info, Timer } from 'lucide-preact';
+import { Check, ClipboardList, Info, Timer } from 'lucide-preact';
+import { restTimer } from '../restTimer';
 
 const useExerciseMap = () => {
   const list = useLive(() => db.exercises.toArray(), [], [] as Exercise[]);
@@ -145,19 +146,22 @@ function WorkoutScreen({ id }: { id: number }) {
               return l ? <div class="hint cue">{l.cue}{l.shoulder && <div class="warn">{l.shoulder}</div>}</div> : null;
             })()}
             {prev && <div class="hint">Last time ({fmtDate(prev.w.date)}): {summary(prev.e)}</div>}
-            <div class="set-head"><span>Set</span><span>Reps</span><span>kg</span><span /></div>
+            <div class="set-head"><span>Set</span><span>Reps</span><span>kg</span><span>Rest</span><span /></div>
             {entry.sets.map((s, si) => (
               <div class="set-row" key={si}>
                 <span class="set-no">{si + 1}</span>
                 <NumberInput value={s.reps} decimals={false} onChange={(v) => setEntries((en) => { en[ei].sets[si].reps = Math.round(v ?? 0); })} />
                 <NumberInput value={s.weight} onChange={(v) => setEntries((en) => { en[ei].sets[si].weight = v ?? 0; })} />
+                <RestButton timerKey={`${id}:${ei}:${si}`} done={!!s.done} seconds={entry.rest ?? DEFAULT_REST}
+                  label={`${ex?.name ?? 'Exercise'} · set ${si + 1}`}
+                  onDone={(d) => setEntries((en) => { en[ei].sets[si].done = d; })} />
                 <button class="icon-btn danger" aria-label="Delete set"
                   onClick={() => setEntries((en) => { en[ei].sets.splice(si, 1); })}><Ico icon={X} size={16} /></button>
               </div>
             ))}
             <ActionRow icon={Plus} label="Add set" onClick={() => setEntries((en) => {
               const last = en[ei].sets[en[ei].sets.length - 1];
-              en[ei].sets.push(last ? { ...last } : { reps: 10, weight: 0 });
+              en[ei].sets.push(last ? { reps: last.reps, weight: last.weight } : { reps: 10, weight: 0 });
             })} />
           </Section>
         );
@@ -305,5 +309,43 @@ function ExerciseDetail({ id }: { id: number }) {
           : <Row><span class="sub">Built-in exercise</span></Row>}
       </Section>
     </Page>
+  );
+}
+
+// ---------- Rest timer button (one per set) ----------
+
+const DEFAULT_REST = 90;
+
+function useRestTimer() {
+  const [, force] = useState(0);
+  useEffect(() => restTimer.subscribe(() => force((n) => n + 1)), []);
+  return restTimer;
+}
+
+/**
+ * Tap after finishing a set: marks it done and starts the rest countdown.
+ * While this set's timer runs it shows the seconds left; tap again to stop it.
+ */
+function RestButton({ timerKey, done, seconds, label, onDone }: {
+  timerKey: string; done: boolean; seconds: number; label: string; onDone: (done: boolean) => void;
+}) {
+  const t = useRestTimer();
+  const mine = t.running && t.key === timerKey;
+  const left = mine ? t.remaining() : 0;
+  const pct = mine ? left / Math.max(t.total, 1) : 0;
+  const tap = () => {
+    if (mine) { t.stop(); return; }
+    if (!done) onDone(true);
+    t.start(seconds, label, timerKey);
+  };
+  return (
+    <button class={`rest-btn ${mine ? 'running' : done ? 'done' : ''}`} onClick={tap}
+      onContextMenu={(e) => { e.preventDefault(); if (done) onDone(false); }}
+      aria-label={mine ? `Stop rest timer, ${left} seconds left` : `Set done, start ${seconds} s rest`}
+      style={mine ? { '--p': `${pct * 360}deg` } as Record<string, string> : undefined}>
+      {mine
+        ? <span class="rest-num">{left}</span>
+        : <Ico icon={done ? Check : Timer} size={18} />}
+    </button>
   );
 }

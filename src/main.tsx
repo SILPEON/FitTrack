@@ -12,6 +12,7 @@ import { YogaHome } from './tabs/Yoga';
 import { recorder } from './recorder';
 import { Dumbbell, Flower2, Map as MapIcon, Scale, UserRound, Utensils, type LucideIcon } from 'lucide-preact';
 import { GradientDefs, Ico } from './icons';
+import { RestBar } from './RestBar';
 
 type TabKey = 'training' | 'yoga' | 'weight' | 'nutrition' | 'routes' | 'profile';
 
@@ -42,6 +43,7 @@ function App() {
           </div>
         ))}
       </div>
+      <RestBar />
       <nav class="tabbar">
         {TABS.map((t) => (
           <button key={t.key} class={t.key === tab ? 'active' : ''} onClick={() => select(t.key)}>

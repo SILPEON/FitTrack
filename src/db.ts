@@ -6,7 +6,7 @@ export const MUSCLES = ['Glutes', 'Quads', 'Chest', 'Shoulders', 'Neck', 'Biceps
   'Hamstrings', 'Forearms', 'Calves', 'Full Body'] as const;
 
 export interface Exercise { id: number; name: string; muscle: string; equipment: string; custom: boolean }
-export interface SetEntry { reps: number; weight: number }
+export interface SetEntry { reps: number; weight: number; done?: boolean }
 export interface WorkoutEntry {
   exerciseId: number; sets: SetEntry[];
   /** Set when the workout was started from a plan. */
