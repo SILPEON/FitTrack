@@ -26,7 +26,7 @@ You need a **Mac with Xcode 26 or newer** (free from the Mac App Store). There i
 2. In Xcode: **Settings → Accounts → +**, then sign in with your Apple ID.
 3. Click the **FitTrack** project (blue icon), then the **FitTrack** target, then **Signing & Capabilities**:
    - Team: choose your Apple ID ("Personal Team")
-   - Bundle Identifier: change `com.yourname.fittrack` to something unique, e.g. `com.<yourname>.fittrack`
+   - Bundle Identifier: `com.silpeon.fittrack` (change it if Xcode says it is taken)
 4. Plug in the iPhone with a USB-C cable and tap **Trust** on the phone.
 5. On the iPhone: **Settings → Privacy & Security → Developer Mode → On** (the phone restarts).
 6. In Xcode, pick your iPhone in the device menu at the top and press **▶ Run** (⌘R).
