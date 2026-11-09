@@ -6,6 +6,7 @@ import { BookOpen, Dumbbell, Ellipsis, Plus, SearchX, Trash, X } from 'lucide-pr
 import { Ico } from '../icons';
 import { NextUpCard, PlansScreen, equipmentTag, getGear, normalise } from './Plans';
 import { BodyMap, IntensityLegend } from '../bodymap';
+import { KegelCard } from './Kegel';
 import { DEFAULT_GEAR, LIBRARY, type Muscle } from '../plans';
 import { Check, PenLine, ChevronDown, ChevronUp, CircleCheck, ClipboardList, Info, Medal, PersonStanding, Timer, Trophy } from 'lucide-preact';
 import { restTimer } from '../restTimer';
@@ -67,6 +68,7 @@ export function TrainingHome() {
       }
       actions={<button class="icon-link" aria-label="New empty workout" onClick={() => newWorkout()}><Ico icon={Plus} size={26} grad="main" /></button>}>
       <NextUpCard onStart={(id) => nav.push(<WorkoutScreen id={id} />)} />
+      <KegelCard />
       <Section title="Workouts">
         {workouts.length === 0 && <Empty icon={Dumbbell} title="No workouts yet" text="Start your plan above, or tap + for an empty workout." />}
         {workouts.map((w) => (
