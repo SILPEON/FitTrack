@@ -1,39 +1,12 @@
 import { useState } from 'preact/hooks';
-import { ChartColumn, Plus, Trash, TriangleExclamationPoint } from 'lucide-preact';
+import { ChartColumn, ChevronDown, ChevronUp, Plus, Trash, TriangleExclamationPoint } from 'lucide-preact';
 import { db, type Stool } from '../db';
 import { dayKey, fmt, fmtDate, shiftDay } from '../calc';
 import { BRISTOL, BristolIcon, GROUP_LABEL } from '../bristol';
 import { Ico } from '../icons';
-import { ActionRow, Page, Row, Section, Sheet, useLive, useNav } from '../ui';
+import { ActionRow, Page, Row, Section, Sheet, useLive } from '../ui';
 
 const timeOf = (ts: number) => new Date(ts).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
-
-/** Digestion section shown under the meals of the selected day. */
-export function DigestionSection({ day }: { day: string }) {
-  const nav = useNav();
-  const items = useLive(() => db.stool.where('day').equals(day).sortBy('time'), [day], [] as Stool[]);
-  const [editing, setEditing] = useState<Stool | 'new' | null>(null);
-  return (
-    <Section title="Digestion" right={items.length ? `${items.length}×` : undefined}>
-      {items.map((s) => {
-        const b = BRISTOL[s.type - 1];
-        return (
-          <Row key={s.id} onClick={() => setEditing(s)}>
-            <BristolIcon type={s.type} size={36} />
-            <div class="row-main">
-              <b>Type {s.type} · {b.name}</b>
-              <div class="sub small">{timeOf(s.time)} · {GROUP_LABEL[b.group]}{flagText(s)}</div>
-            </div>
-            <span class={`bristol-pill ${b.group}`}>{s.type}</span>
-          </Row>
-        );
-      })}
-      <ActionRow icon={Plus} label="Log bowel movement" onClick={() => setEditing('new')} />
-      <ActionRow icon={ChartColumn} label="Digestion trends" onClick={() => nav.push(<DigestionTrends />)} />
-      {editing && <StoolSheet day={day} entry={editing === 'new' ? null : editing} onClose={() => setEditing(null)} />}
-    </Section>
-  );
-}
 
 const flagText = (s: Stool) => {
   const f = [s.urgency && 'urgent', s.strain && 'straining', s.pain && 'pain', s.blood && 'blood'].filter(Boolean);
@@ -46,6 +19,7 @@ function StoolSheet({ day, entry, onClose }: { day: string; entry: Stool | null;
     return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
   };
   const [type, setType] = useState<number | null>(entry?.type ?? null);
+  const [date, setDate] = useState(entry?.day ?? day);
   const [time, setTime] = useState(initTime);
   const [flags, setFlags] = useState({ urgency: !!entry?.urgency, strain: !!entry?.strain, pain: !!entry?.pain, blood: !!entry?.blood });
   const [note, setNote] = useState(entry?.note ?? '');
@@ -53,8 +27,8 @@ function StoolSheet({ day, entry, onClose }: { day: string; entry: Stool | null;
   const save = async () => {
     if (!type) return;
     const [h, m] = time.split(':').map(Number);
-    const d = new Date(day + 'T12:00:00'); d.setHours(h || 0, m || 0, 0, 0);
-    const data = { day, time: d.getTime(), type, ...flags, note: note.trim() || undefined };
+    const d = new Date(date + 'T12:00:00'); d.setHours(h || 0, m || 0, 0, 0);
+    const data = { day: date, time: d.getTime(), type, ...flags, note: note.trim() || undefined };
     if (entry) await db.stool.update(entry.id, data);
     else await db.stool.add(data as Stool);
     onClose();
@@ -84,6 +58,10 @@ function StoolSheet({ day, entry, onClose }: { day: string; entry: Stool | null;
       </Section>
       <Section>
         <Row>
+          <span class="row-main">Date</span>
+          <input type="date" class="date-input" value={date} max={dayKey()} onChange={(e) => setDate((e.target as HTMLInputElement).value || dayKey())} />
+        </Row>
+        <Row>
           <span class="row-main">Time</span>
           <input type="time" class="date-input" value={time} onChange={(e) => setTime((e.target as HTMLInputElement).value)} />
         </Row>
@@ -107,17 +85,22 @@ function StoolSheet({ day, entry, onClose }: { day: string; entry: Stool | null;
   );
 }
 
-// ---------- Trends ----------
+// ---------- Digestion page (Metabolism › Digestion) ----------
 
-function DigestionTrends() {
+export function DigestionHome() {
   const from = shiftDay(dayKey(), -13);
   const recent = useLive(() => db.stool.where('day').aboveOrEqual(from).toArray(), [from], [] as Stool[]);
+  const [editing, setEditing] = useState<Stool | 'new' | null>(null);
+  const [showDist, setShowDist] = useState(false);
   const days = Array.from({ length: 14 }, (_, i) => shiftDay(from, i));
   const byDay = new Map(days.map((d) => [d, recent.filter((s) => s.day === d)]));
   const total = recent.length;
   const healthy = recent.filter((s) => s.type >= 3 && s.type <= 5).length;
   const avgType = total ? recent.reduce((t, s) => t + s.type, 0) / total : 0;
+  const counts = BRISTOL.map((b) => recent.filter((s) => s.type === b.type).length);
+  const maxCount = Math.max(1, ...counts);
   const blood = recent.some((s) => s.blood);
+  const sorted = [...recent].sort((a, b) => b.time - a.time);
 
   return (
     <Page title="Digestion">
@@ -127,34 +110,61 @@ function DigestionTrends() {
         <div class="tile"><span class="tile-label">Healthy (3–5)</span><b>{total ? `${Math.round((healthy / total) * 100)} %` : '–'}</b></div>
       </div>
 
-      <Section title="Last 14 days" footer="Each dot is one bowel movement, placed at its Bristol type. Normal frequency ranges from 3× per day to 3× per week.">
+      <Section title="Last 14 days">
         <div class="pad">
           <div class="stool-chart">
             <div class="stool-axis">{[1, 2, 3, 4, 5, 6, 7].map((t) => <span>{t}</span>)}</div>
             <div class="stool-band" />
             {days.map((d) => (
               <div class="stool-col">
-                {byDay.get(d)!.map((s) => <i class={`stool-dot ${BRISTOL[s.type - 1].group}`} style={{ top: `${((s.type - 1) / 6) * 100}%` }} />)}
+                {byDay.get(d)!.map((s) => (
+                  <i class={`stool-dot ${BRISTOL[s.type - 1].group}`} style={{ top: `${((s.type - 1) / 6) * 100}%` }}
+                    role="button" aria-label={`Type ${s.type}, ${fmtDate(s.day)} ${timeOf(s.time)}`} onClick={() => setEditing(s)} />
+                ))}
                 <span class="stool-day">{new Date(d + 'T12:00:00').getDate()}</span>
               </div>
             ))}
           </div>
         </div>
+        <div class="pad">
+          <button class="big-btn green full" onClick={() => setEditing('new')}><Ico icon={Plus} size={20} />Log bowel movement</button>
+        </div>
       </Section>
 
-      <Section title="Type distribution">
-        <div class="pad">
-          {BRISTOL.map((b) => {
-            const n = recent.filter((s) => s.type === b.type).length;
-            return (
+      <Section>
+        <button class="row tappable expand" aria-expanded={showDist} onClick={() => setShowDist(!showDist)}>
+          <span class="icon-badge"><Ico icon={ChartColumn} size={18} /></span>
+          <div class="row-main"><b>Type distribution</b><div class="sub small">Last 14 days · {total} {total === 1 ? 'entry' : 'entries'}</div></div>
+          <Ico icon={showDist ? ChevronUp : ChevronDown} size={18} class="chevron" />
+        </button>
+        {showDist && (
+          <div class="pad">
+            {BRISTOL.map((b, i) => (
               <div class="vol-row">
                 <span class="vol-label"><BristolIcon type={b.type} size={22} />Type {b.type}</span>
-                <div class="bar"><div class={`bristol-bar ${b.group}`} style={{ width: `${total ? (n / Math.max(1, ...BRISTOL.map((x) => recent.filter((s) => s.type === x.type).length))) * 100 : 0}%` }} /></div>
-                <span class="vol-num">{n}</span>
+                <div class="bar"><div class={`bristol-bar ${b.group}`} style={{ width: `${(counts[i] / maxCount) * 100}%` }} /></div>
+                <span class="vol-num">{counts[i]}</span>
               </div>
-            );
-          })}
-        </div>
+            ))}
+          </div>
+        )}
+      </Section>
+
+      <Section title="Entries">
+        {sorted.length === 0 && <Row><span class="sub">Nothing logged in the last 14 days.</span></Row>}
+        {sorted.map((s) => {
+          const b = BRISTOL[s.type - 1];
+          return (
+            <Row key={s.id} onClick={() => setEditing(s)}>
+              <BristolIcon type={s.type} size={36} />
+              <div class="row-main">
+                <b>Type {s.type} · {b.name}</b>
+                <div class="sub small">{fmtDate(s.day)} · {timeOf(s.time)} · {GROUP_LABEL[b.group]}{flagText(s)}</div>
+              </div>
+              <span class={`bristol-pill ${b.group}`}>{s.type}</span>
+            </Row>
+          );
+        })}
       </Section>
 
       <Section title="Tips" footer="See a doctor for blood or black stool, unexplained weight loss, or a lasting change in habits (more than 3 weeks).">
@@ -165,11 +175,8 @@ function DigestionTrends() {
           {blood && <p class="warn">• You logged blood in the last 14 days. Please get it checked.</p>}
         </div>
       </Section>
-      <Section title="History">
-        {[...recent].sort((a, b) => b.time - a.time).slice(0, 20).map((s) => (
-          <Row label={`${fmtDate(s.day)} · ${timeOf(s.time)}`} value={`Type ${s.type}`} />
-        ))}
-      </Section>
+
+      {editing && <StoolSheet day={editing === 'new' ? dayKey() : editing.day} entry={editing === 'new' ? null : editing} onClose={() => setEditing(null)} />}
     </Page>
   );
 }

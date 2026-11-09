@@ -4,7 +4,6 @@ import { dayKey, fmt, shiftDay, targets, type Targets } from '../calc';
 import { ActionRow, Bar, NumberInput, Page, Row, Section, Segmented, Sheet, useLive } from '../ui';
 import { ChevronLeft, ChevronRight, Plus, ScanBarcode, Trash } from 'lucide-preact';
 import { Ico } from '../icons';
-import { DigestionSection } from './Digestion';
 import type { BarcodeScanner as ScannerType } from '../scanner';
 import { lookupBarcode } from '../off';
 
@@ -88,8 +87,6 @@ export function NutritionHome() {
           </Section>
         );
       })}
-
-      <DigestionSection day={day} />
 
       {addMeal && <AddFood meal={addMeal} day={day} onClose={() => setAddMeal(null)} />}
       {editing && <EditEntry entry={editing} onClose={() => setEditing(null)} />}

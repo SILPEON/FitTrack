@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
 import { NutritionHome } from './Nutrition';
 import { WeightHome } from './Weight';
+import { DigestionHome } from './Digestion';
 
-const PAGES = ['Nutrition', 'Weight'] as const;
+const PAGES = ['Weight', 'Nutrition', 'Digestion'] as const;
 
-/** Nutrition (left) and Weight (right), swipe between them. */
+/** Weight, Nutrition and Digestion, left to right; swipe between them. */
 export function MetabolismHome() {
   const pager = useRef<HTMLDivElement>(null);
   const [page, setPage] = useState(0);
@@ -24,8 +25,9 @@ export function MetabolismHome() {
     <div class="pager-wrap">
       <div class="pager" ref={pager}
         onScroll={(e) => { const el = e.currentTarget as HTMLDivElement; const p = Math.round(el.scrollLeft / Math.max(el.clientWidth, 1)); if (p !== page) setPage(p); }}>
-        <div class="pager-page" aria-hidden={page !== 0}><NutritionHome /></div>
-        <div class="pager-page" aria-hidden={page !== 1}><WeightHome /></div>
+        <div class="pager-page" aria-hidden={page !== 0}><WeightHome /></div>
+        <div class="pager-page" aria-hidden={page !== 1}><NutritionHome /></div>
+        <div class="pager-page" aria-hidden={page !== 2}><DigestionHome /></div>
       </div>
       <div class="pager-switch" role="tablist">
         {PAGES.map((p, i) => (
