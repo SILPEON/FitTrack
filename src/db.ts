@@ -36,6 +36,8 @@ export type Pose = 'front' | 'side' | 'back';
 export interface Photo { id: number; day: string; time: number; pose: Pose; blob: Blob; w: number; h: number; note?: string }
 export interface YogaSession { id: number; day: string; time: number; routineId: string; secs: number }
 export interface MobilityTest { id: number; day: string; toeTouchCm: number }
+/** Bowel movement, Bristol Stool Scale type 1–7. */
+export interface Stool { id: number; day: string; time: number; type: number; urgency?: boolean; strain?: boolean; pain?: boolean; blood?: boolean; note?: string }
 
 export const db = new Dexie('fittrack') as Dexie & {
   exercises: EntityTable<Exercise, 'id'>;
@@ -48,6 +50,7 @@ export const db = new Dexie('fittrack') as Dexie & {
   photos: EntityTable<Photo, 'id'>;
   yogaSessions: EntityTable<YogaSession, 'id'>;
   mobility: EntityTable<MobilityTest, 'id'>;
+  stool: EntityTable<Stool, 'id'>;
 };
 
 db.version(1).stores({
@@ -69,6 +72,9 @@ db.version(3).stores({ photos: '++id, day, pose, time', yogaSessions: '++id, day
   const add = LIBRARY.filter((e) => !have.has(e.name)).map((e) => ({ name: e.name, muscle: e.group, equipment: e.equipment, custom: false }));
   if (add.length) await tx.table('exercises').bulkAdd(add);
 });
+
+// v4: stool diary.
+db.version(4).stores({ stool: '++id, day' });
 
 db.on('populate', (tx) => {
   const seeded = new Set(EXERCISES.map(([name]) => name));
@@ -105,7 +111,7 @@ export async function saveProfile(p: Profile) {
 
 // ---------- Backup ----------
 
-const TABLES = ['exercises', 'workouts', 'weights', 'foods', 'foodLog', 'routes', 'kv', 'yogaSessions', 'mobility', 'photos'] as const;
+const TABLES = ['exercises', 'workouts', 'weights', 'foods', 'foodLog', 'routes', 'kv', 'yogaSessions', 'mobility', 'photos', 'stool'] as const;
 
 const blobToDataURL = (b: Blob) => new Promise<string>((res, rej) => {
   const r = new FileReader(); r.onload = () => res(r.result as string); r.onerror = rej; r.readAsDataURL(b);

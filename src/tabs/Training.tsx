@@ -7,6 +7,7 @@ import { Ico } from '../icons';
 import { NextUpCard, PlansScreen, equipmentTag, getGear, normalise } from './Plans';
 import { BodyMap, IntensityLegend } from '../bodymap';
 import { KegelCard } from './Kegel';
+import { YogaCard } from './Yoga';
 import { DEFAULT_GEAR, LIBRARY, type Muscle } from '../plans';
 import { Check, PenLine, ChevronDown, ChevronUp, CircleCheck, ClipboardList, Info, Medal, PersonStanding, Timer, Trophy } from 'lucide-preact';
 import { restTimer } from '../restTimer';
@@ -16,8 +17,8 @@ const useExerciseMap = () => {
   return useMemo(() => new Map(list.map((e) => [e.id, e])), [list]);
 };
 
-const volume = (w: Workout) => w.entries.reduce((t, e) => t + e.sets.reduce((s, x) => s + x.reps * x.weight, 0), 0);
-const setCount = (w: Workout) => w.entries.reduce((t, e) => t + e.sets.length, 0);
+export const volume = (w: Workout) => w.entries.reduce((t, e) => t + e.sets.reduce((s, x) => s + x.reps * x.weight, 0), 0);
+export const setCount = (w: Workout) => w.entries.reduce((t, e) => t + e.sets.length, 0);
 const summary = (e: WorkoutEntry) => e.sets.map((s) => `${s.side ? s.side + ' ' : ''}${s.reps}×${s.weight ? `${fmt(s.weight)} kg` : 'BW'}`).join(', ');
 
 /** Most recent earlier entry for the same exercise. */
@@ -33,30 +34,32 @@ function previousEntry(all: Workout[], exerciseId: number, before: number, exclu
 
 // ---------- Home ----------
 
+/** A workout counts as "in progress" until it's finished, for at most 12 hours after its start. */
+export const isInProgress = (w: Workout) => !w.finishedAt && Date.now() - w.date < 12 * 3600 * 1000;
+
+/** Creates a new workout from an earlier one (exercises and numbers, not the done marks). */
+export async function repeatWorkout(from?: Workout): Promise<number> {
+  const entries: WorkoutEntry[] = from
+    ? from.entries.map((e) => ({ ...structuredClone(e), done: false, sets: e.sets.map((x) => ({ reps: x.reps, weight: x.weight, ...(x.side ? { side: x.side } : {}) })) }))
+    : [];
+  return db.workouts.add({
+    date: Date.now(), title: from?.title ?? 'Workout', notes: '', entries,
+    ...(from?.planId ? { planId: from.planId, dayId: from.dayId } : {}),
+  } as Workout);
+}
+
 export function TrainingHome() {
   const nav = useNav();
-  const workouts = useLive(() => db.workouts.orderBy('date').reverse().toArray(), [], [] as Workout[]);
+  const recent = useLive(() => db.workouts.where('date').above(Date.now() - 12 * 3600 * 1000).toArray(), [], [] as Workout[]);
+  const open = recent.filter(isInProgress).sort((a, b) => b.date - a.date);
   const exMap = useExerciseMap();
-  const [menuFor, setMenuFor] = useState<Workout | null>(null);
 
   // Plan day screens ask us to open the workout they just created.
   useEffect(() => {
-    const open = (e: Event) => nav.push(<WorkoutScreen id={(e as CustomEvent<number>).detail} />);
-    window.addEventListener('open-workout', open);
-    return () => window.removeEventListener('open-workout', open);
+    const handler = (e: Event) => nav.push(<WorkoutScreen id={(e as CustomEvent<number>).detail} />);
+    window.addEventListener('open-workout', handler);
+    return () => window.removeEventListener('open-workout', handler);
   }, [nav.push]);
-
-  const newWorkout = async (from?: Workout) => {
-    // Repeating copies exercises and numbers but not the "done" marks.
-    const entries: WorkoutEntry[] = from
-      ? from.entries.map((e) => ({ ...structuredClone(e), done: false, sets: e.sets.map((x) => ({ reps: x.reps, weight: x.weight, ...(x.side ? { side: x.side } : {}) })) }))
-      : [];
-    const id = await db.workouts.add({
-      date: Date.now(), title: from?.title ?? 'Workout', notes: '', entries,
-      ...(from?.planId ? { planId: from.planId, dayId: from.dayId } : {}),
-    } as Workout);
-    nav.push(<WorkoutScreen id={id} />);
-  };
 
   return (
     <Page title="Training"
@@ -66,26 +69,27 @@ export function TrainingHome() {
           <button class="icon-link" aria-label="Exercise library" onClick={() => nav.push(<ExerciseLibrary />)}><Ico icon={BookOpen} size={24} grad="main" /></button>
         </span>
       }
-      actions={<button class="icon-link" aria-label="New empty workout" onClick={() => newWorkout()}><Ico icon={Plus} size={26} grad="main" /></button>}>
+      actions={<button class="icon-link" aria-label="New empty workout" onClick={async () => nav.push(<WorkoutScreen id={await repeatWorkout()} />)}><Ico icon={Plus} size={26} grad="main" /></button>}>
       <NextUpCard onStart={(id) => nav.push(<WorkoutScreen id={id} />)} />
+      {open.length > 0 && (
+        <Section title="Continue workout">
+          {open.map((w) => {
+            const done = w.entries.filter((e) => e.done).length;
+            return (
+              <Row key={w.id} chevron onClick={() => nav.push(<WorkoutScreen id={w.id} />)}>
+                <span class="icon-badge"><Ico icon={Dumbbell} size={18} /></span>
+                <div class="row-main">
+                  <b>{w.title || 'Workout'}</b>
+                  <div class="sub small">Started {new Date(w.date).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })} · {done}/{w.entries.length} exercises done</div>
+                  <div class="sub small clamp2">{w.entries.map((e) => exMap.get(e.exerciseId)?.name ?? '').filter(Boolean).join(' · ')}</div>
+                </div>
+              </Row>
+            );
+          })}
+        </Section>
+      )}
+      <YogaCard />
       <KegelCard />
-      <Section title="Workouts">
-        {workouts.length === 0 && <Empty icon={Dumbbell} title="No workouts yet" text="Start your plan above, or tap + for an empty workout." />}
-        {workouts.map((w) => (
-          <Row key={w.id} onClick={() => nav.push(<WorkoutScreen id={w.id} />)}>
-            <div class="row-main">
-              <div class="row-title-line"><b>{w.title || 'Workout'}{w.finishedAt && <Ico icon={CircleCheck} size={15} grad="fresh" class="inline-ico title-check" />}</b><span class="sub">{fmtDate(w.date)}</span></div>
-              <div class="sub clamp2">{w.entries.map((e) => exMap.get(e.exerciseId)?.name ?? 'Deleted exercise').join(' · ')}</div>
-              <div class="sub small">{setCount(w)} {setCount(w) === 1 ? 'set' : 'sets'} · {fmt(volume(w), 0)} kg volume</div>
-            </div>
-            <span class="icon-btn" onClick={(e) => { e.stopPropagation(); setMenuFor(w); }}><Ico icon={Ellipsis} size={20} /></span>
-          </Row>
-        ))}
-      </Section>
-      <ActionSheet open={!!menuFor} onClose={() => setMenuFor(null)} actions={menuFor ? [
-        { label: 'Repeat this workout today', run: () => newWorkout(menuFor) },
-        { label: 'Delete workout', destructive: true, run: () => { if (confirm('Delete this workout?')) db.workouts.delete(menuFor.id); } },
-      ] : []} />
     </Page>
   );
 }
@@ -95,7 +99,7 @@ export function TrainingHome() {
 const SWITCH_SIDES_REST = 10;
 const sideLabel = { L: 'Left', R: 'Right' } as const;
 
-function WorkoutScreen({ id }: { id: number }) {
+export function WorkoutScreen({ id }: { id: number }) {
   const nav = useNav();
   const workout = useLive(() => db.workouts.get(id), [id], undefined as Workout | undefined);
   const all = useLive(() => db.workouts.toArray(), [], [] as Workout[]);

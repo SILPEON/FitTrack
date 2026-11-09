@@ -444,3 +444,60 @@ select { border: 0; background: var(--fill); border-radius: 9px; padding: 6px 10
 .kegel-canvas { flex: 1; width: 100%; min-height: 240px; display: block; }
 .kegel-hint { text-align: center; font-size: 13px; color: rgba(255,255,255,.55); padding: 8px 28px 0; line-height: 1.4; }
 .kegel-player .ctrl.main { margin: 0 auto; }
+
+/* Five tabs again */
+.tabbar button { font-size: 10px; letter-spacing: 0; }
+
+/* ----- Metabolism pager (swipe Nutrition ⟷ Weight) ----- */
+.pager-wrap { position: relative; height: 100%; }
+.pager { display: flex; height: 100%; overflow-x: auto; overflow-y: hidden; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; }
+.pager::-webkit-scrollbar { display: none; }
+.pager-page { flex: 0 0 100%; width: 100%; height: 100%; scroll-snap-align: start; scroll-snap-stop: always; position: relative; overflow: hidden; }
+.pager-page .content { padding-bottom: 72px; }
+.pager-switch { position: absolute; left: 50%; bottom: 12px; transform: translateX(-50%); display: flex; gap: 2px; padding: 3px; border-radius: 18px; background: var(--tabbar); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); box-shadow: 0 4px 18px rgba(0,0,0,.18); z-index: 20; }
+.pager-switch button { padding: 7px 16px; border-radius: 15px; font-size: 14px; font-weight: 600; color: var(--sub); }
+.pager-switch button.active { background: var(--grad-main); color: #fff; }
+
+/* ----- Bristol / digestion ----- */
+.bristol-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; padding: 10px; }
+.bristol-card { display: grid; grid-template-columns: auto 1fr; grid-template-rows: auto auto auto; column-gap: 8px; align-items: center; text-align: left; padding: 10px; border-radius: 12px; background: var(--fill); border: 2px solid transparent; position: relative; }
+.bristol-card .bristol-icon { grid-row: 1 / span 3; }
+.bristol-card.selected { border-color: #8b5cf6; background: color-mix(in srgb, #8b5cf6 12%, var(--fill)); }
+.bristol-num { position: absolute; top: 6px; right: 8px; font-size: 12px; font-weight: 800; padding: 1px 7px; border-radius: 8px; color: #fff; }
+.bristol-card.hard .bristol-num, .bristol-pill.hard, .stool-dot.hard, .bristol-bar.hard { background: var(--grad-warm); }
+.bristol-card.ideal .bristol-num, .bristol-pill.ideal, .stool-dot.ideal, .bristol-bar.ideal { background: var(--grad-fresh); }
+.bristol-card.loose .bristol-num, .bristol-pill.loose, .stool-dot.loose, .bristol-bar.loose { background: var(--grad-cool); }
+.bristol-name { font-weight: 650; font-size: 13.5px; line-height: 1.2; padding-right: 22px; }
+.bristol-desc { font-size: 11.5px; color: var(--sub); line-height: 1.25; }
+.bristol-card:last-child:nth-child(odd) { grid-column: 1 / -1; }
+.bristol-pill { min-width: 26px; text-align: center; padding: 3px 8px; border-radius: 10px; color: #fff; font-weight: 800; font-size: 13px; }
+.bristol-bar { height: 100%; border-radius: 4px; }
+.stool-chart { position: relative; display: grid; grid-template-columns: 18px repeat(14, 1fr); height: 170px; padding-bottom: 18px; }
+.stool-axis { display: flex; flex-direction: column; justify-content: space-between; font-size: 10px; color: var(--sub); height: 100%; }
+.stool-band { position: absolute; left: 18px; right: 0; top: calc(1.5 / 6 * (100% - 18px)); height: calc(3 / 6 * (100% - 18px)); background: color-mix(in srgb, #2ee6b0 12%, transparent); border-radius: 6px; pointer-events: none; }
+.stool-col { position: relative; height: 100%; border-left: 1px dashed var(--sep); }
+.stool-dot { position: absolute; left: 50%; width: 10px; height: 10px; border-radius: 50%; transform: translate(-50%, -50%); margin-top: 0; box-shadow: 0 0 0 2px var(--card); }
+.stool-day { position: absolute; bottom: -18px; left: 50%; transform: translateX(-50%); font-size: 10px; color: var(--sub); }
+
+/* ----- History ----- */
+.cal { padding: 10px 10px 12px; }
+.cal-head { display: flex; justify-content: space-between; align-items: center; padding: 0 4px 8px; font-size: 17px; }
+.cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 3px; }
+.cal-wd { text-align: center; font-size: 11px; color: var(--sub); padding-bottom: 4px; font-weight: 600; }
+.cal-day { aspect-ratio: 1 / 1.08; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; }
+.cal-day.active { background: color-mix(in srgb, #8b5cf6 9%, var(--fill)); }
+.cal-day.today .cal-num { color: var(--accent); font-weight: 800; }
+.cal-day.sel { background: var(--grad-main); color: #fff; }
+.cal-day.sel .cal-num { color: #fff; }
+.cal-num { font-size: 14.5px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.cal-dots { display: flex; gap: 2px; height: 6px; }
+.hist-dot { width: 6px; height: 6px; border-radius: 50%; display: inline-block; }
+.cal-day.sel .hist-dot { box-shadow: 0 0 0 1.5px #fff; }
+.hist-workout { background: var(--grad-main); }
+.hist-yoga { background: var(--grad-fresh); }
+.hist-kegel { background: var(--grad-pink); }
+.hist-route { background: var(--grad-cool); }
+.icon-badge.hist-workout, .icon-badge.hist-yoga, .icon-badge.hist-kegel, .icon-badge.hist-route { color: #fff; }
+.cal-legend { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; padding: 12px 4px 2px; font-size: 12px; color: var(--sub); }
+.cal-legend span { display: inline-flex; align-items: center; gap: 5px; }
+.cal-foot { text-align: center; padding-top: 4px; }

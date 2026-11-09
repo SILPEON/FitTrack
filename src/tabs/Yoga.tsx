@@ -20,6 +20,37 @@ async function programState() {
 }
 const scaleFor = (week: number | undefined) => PROGRAM.weeks[Math.min(Math.max((week ?? 1) - 1, 0), PROGRAM.weeks.length - 1)].scale;
 
+/** Compact yoga panel for the Training home: today's program routines with one-tap start. */
+export function YogaCard() {
+  const nav = useNav();
+  const program = useLive(() => programState(), [], null as Awaited<ReturnType<typeof programState>>);
+  const today = dayKey();
+  const sessions = useLive(() => db.yogaSessions.where('day').equals(today).toArray(), [today], [] as YogaSession[]);
+  const [playing, setPlaying] = useState<Routine | null>(null);
+  const active = program && !program.done;
+  const scale = active ? scaleFor(program.week) : 1;
+  const ids = active ? PROGRAM.schedule[(new Date().getDay() + 6) % 7] : ['legs-daily', 'hamstrings'];
+  const done = new Set(sessions.map((s) => s.routineId));
+  return (
+    <Section title={active ? `Yoga & mobility · week ${program.week} of 4` : 'Yoga & mobility'}
+      right={<button class="link small-link" onClick={() => nav.push(<YogaHome />)}>All routines</button>}>
+      {ids.map((id) => {
+        const r = byId(id);
+        const isDone = done.has(id);
+        return (
+          <Row key={id} onClick={() => setPlaying(r)}>
+            <span class={`icon-badge ${isDone ? 'done' : 'violet'}`}><Ico icon={isDone ? CircleCheck : routineIcon(r)} size={18} /></span>
+            <div class="row-main"><b>{r.name}</b><div class="sub small">{isDone ? 'Done today' : `${Math.round(routineSecs(r, scale) / 60)} min · ${r.kind}`}</div></div>
+            <Ico icon={Play} size={20} grad="main" />
+          </Row>
+        );
+      })}
+      {!active && <ActionRow icon={CalendarCheck} label="Start the 4-week leg mobility program" onClick={() => db.kv.put({ key: 'yogaProgramStart', value: today })} />}
+      {playing && <Player routine={playing} scale={scale} onClose={() => setPlaying(null)} />}
+    </Section>
+  );
+}
+
 export function YogaHome() {
   const nav = useNav();
   const program = useLive(() => programState(), [], null as Awaited<ReturnType<typeof programState>>);

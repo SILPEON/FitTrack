@@ -4,35 +4,29 @@ import 'leaflet/dist/leaflet.css';
 import './styles.css';
 import { Stack } from './ui';
 import { TrainingHome } from './tabs/Training';
-import { WeightHome } from './tabs/Weight';
-import { NutritionHome } from './tabs/Nutrition';
 import { RoutesHome } from './tabs/Routes';
 import { ProfileHome } from './tabs/Profile';
-import { YogaHome } from './tabs/Yoga';
+import { HistoryHome } from './tabs/History';
+import { MetabolismHome } from './tabs/Metabolism';
 import { recorder } from './recorder';
-import { Dumbbell, Flower2, Map as MapIcon, Scale, UserRound, Utensils, type LucideIcon } from 'lucide-preact';
+import { CalendarDays, Dumbbell, Flame, Map as MapIcon, UserRound, type LucideIcon } from 'lucide-preact';
 import { GradientDefs, Ico } from './icons';
 import { RestBar } from './RestBar';
 
-type TabKey = 'training' | 'yoga' | 'weight' | 'nutrition' | 'routes' | 'profile';
+type TabKey = 'history' | 'routes' | 'training' | 'metabolism' | 'profile';
 
 const TABS: { key: TabKey; label: string; icon: LucideIcon; root: () => preact.VNode }[] = [
-  { key: 'training', label: 'Training', icon: Dumbbell, root: () => <TrainingHome /> },
-  { key: 'yoga', label: 'Yoga', icon: Flower2, root: () => <YogaHome /> },
-  { key: 'weight', label: 'Weight', icon: Scale, root: () => <WeightHome /> },
-  { key: 'nutrition', label: 'Nutrition', icon: Utensils, root: () => <NutritionHome /> },
+  { key: 'history', label: 'History', icon: CalendarDays, root: () => <HistoryHome /> },
   { key: 'routes', label: 'Routes', icon: MapIcon, root: () => <RoutesHome /> },
+  { key: 'training', label: 'Training', icon: Dumbbell, root: () => <TrainingHome /> },
+  { key: 'metabolism', label: 'Metabolism', icon: Flame, root: () => <MetabolismHome /> },
   { key: 'profile', label: 'Profile', icon: UserRound, root: () => <ProfileHome /> },
 ];
 
 function App() {
-  const [tab, setTab] = useState<TabKey>(() => {
-    try { return (localStorage.getItem('tab') as TabKey) || 'training'; } catch { return 'training'; }
-  });
-  const select = (k: TabKey) => {
-    setTab(k);
-    try { localStorage.setItem('tab', k); } catch { /* ignore */ }
-  };
+  // The app always opens on Training.
+  const [tab, setTab] = useState<TabKey>('training');
+  const select = (k: TabKey) => setTab(k);
   return (
     <div class="app">
       <GradientDefs />

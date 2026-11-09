@@ -103,7 +103,7 @@ export function RoutesHome() {
 
 // ---------- Detail ----------
 
-function RouteDetail({ id }: { id: number }) {
+export function RouteDetail({ id }: { id: number }) {
   const nav = useNav();
   const route = useLive(() => db.routes.get(id), [id], undefined as Route | undefined);
   if (!route) return <Page title="Route"><div /></Page>;

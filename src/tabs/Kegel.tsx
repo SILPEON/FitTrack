@@ -6,7 +6,7 @@ import { DEFAULT_KEGEL, KEGEL_GUIDE, LEVELS, SESSIONS_PER_DAY, SESSIONS_TO_ADVAN
 import { Ico } from '../icons';
 import { ActionRow, Page, Row, Section, useLive, useNav, Overlay } from '../ui';
 
-const getKegel = async (): Promise<KegelState> => ({ ...DEFAULT_KEGEL, ...((await db.kv.get('kegel'))?.value as Partial<KegelState> ?? {}) });
+export const getKegel = async (): Promise<KegelState> => ({ ...DEFAULT_KEGEL, ...((await db.kv.get('kegel'))?.value as Partial<KegelState> ?? {}) });
 const saveKegel = (s: KegelState) => db.kv.put({ key: 'kegel', value: s });
 const minutes = (lv: Level) => Math.round(buildSession(lv).total / 60);
 
