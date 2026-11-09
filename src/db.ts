@@ -1,13 +1,18 @@
 import Dexie, { type EntityTable } from 'dexie';
 import { EXERCISES, FOODS } from './seed';
+import { LIBRARY } from './plans';
 
-export const MUSCLES = ['Chest', 'Back', 'Shoulders', 'Biceps', 'Triceps', 'Forearms', 'Quads',
-  'Hamstrings', 'Glutes', 'Calves', 'Core', 'Full Body'] as const;
+export const MUSCLES = ['Glutes', 'Quads', 'Chest', 'Shoulders', 'Neck', 'Biceps', 'Triceps', 'Back', 'Upper back', 'Core',
+  'Hamstrings', 'Forearms', 'Calves', 'Full Body'] as const;
 
 export interface Exercise { id: number; name: string; muscle: string; equipment: string; custom: boolean }
 export interface SetEntry { reps: number; weight: number }
-export interface WorkoutEntry { exerciseId: number; sets: SetEntry[] }
-export interface Workout { id: number; date: number; title: string; notes: string; entries: WorkoutEntry[] }
+export interface WorkoutEntry {
+  exerciseId: number; sets: SetEntry[];
+  /** Set when the workout was started from a plan. */
+  target?: string; rest?: number; note?: string;
+}
+export interface Workout { id: number; date: number; title: string; notes: string; entries: WorkoutEntry[]; planId?: string; dayId?: string }
 export interface WeightEntry { id: number; day: string; kg: number }
 /** Nutrients per 100 g. */
 export interface Food {
@@ -27,6 +32,10 @@ export type Activity = 'walk' | 'run' | 'bike';
 export type Pt = [number, number, number | null, number | null];
 export interface Route { id: number; name: string; date: number; activity: Activity; planned: boolean; distance: number; duration: number; elevation: number; points: Pt[] }
 export interface KV { key: string; value: unknown }
+export type Pose = 'front' | 'side' | 'back';
+export interface Photo { id: number; day: string; time: number; pose: Pose; blob: Blob; w: number; h: number; note?: string }
+export interface YogaSession { id: number; day: string; time: number; routineId: string; secs: number }
+export interface MobilityTest { id: number; day: string; toeTouchCm: number }
 
 export const db = new Dexie('fittrack') as Dexie & {
   exercises: EntityTable<Exercise, 'id'>;
@@ -36,6 +45,9 @@ export const db = new Dexie('fittrack') as Dexie & {
   foodLog: EntityTable<FoodLog, 'id'>;
   routes: EntityTable<Route, 'id'>;
   kv: EntityTable<KV, 'key'>;
+  photos: EntityTable<Photo, 'id'>;
+  yogaSessions: EntityTable<YogaSession, 'id'>;
+  mobility: EntityTable<MobilityTest, 'id'>;
 };
 
 db.version(1).stores({
@@ -51,8 +63,19 @@ db.version(1).stores({
 // v2: barcode index for scanned products.
 db.version(2).stores({ foods: '++id, name, lastUsed, barcode' });
 
+// v3: progress photos, yoga sessions, mobility tests; training-plan exercises in the library.
+db.version(3).stores({ photos: '++id, day, pose, time', yogaSessions: '++id, day', mobility: '++id, day' }).upgrade(async (tx) => {
+  const have = new Set((await tx.table('exercises').toArray()).map((e: Exercise) => e.name));
+  const add = LIBRARY.filter((e) => !have.has(e.name)).map((e) => ({ name: e.name, muscle: e.group, equipment: e.equipment, custom: false }));
+  if (add.length) await tx.table('exercises').bulkAdd(add);
+});
+
 db.on('populate', (tx) => {
-  tx.table('exercises').bulkAdd(EXERCISES.map(([name, muscle, equipment]) => ({ name, muscle, equipment, custom: false })));
+  const seeded = new Set(EXERCISES.map(([name]) => name));
+  tx.table('exercises').bulkAdd([
+    ...EXERCISES.map(([name, muscle, equipment]) => ({ name, muscle, equipment, custom: false })),
+    ...LIBRARY.filter((e) => !seeded.has(e.name)).map((e) => ({ name: e.name, muscle: e.group, equipment: e.equipment, custom: false })),
+  ]);
   tx.table('foods').bulkAdd(FOODS.map(([name, kcal, protein, carbs, fat, fiber]) => ({ name, kcal, protein, carbs, fat, fiber, custom: false })));
 });
 
@@ -82,19 +105,31 @@ export async function saveProfile(p: Profile) {
 
 // ---------- Backup ----------
 
-const TABLES = ['exercises', 'workouts', 'weights', 'foods', 'foodLog', 'routes', 'kv'] as const;
+const TABLES = ['exercises', 'workouts', 'weights', 'foods', 'foodLog', 'routes', 'kv', 'yogaSessions', 'mobility', 'photos'] as const;
+
+const blobToDataURL = (b: Blob) => new Promise<string>((res, rej) => {
+  const r = new FileReader(); r.onload = () => res(r.result as string); r.onerror = rej; r.readAsDataURL(b);
+});
+const dataURLToBlob = async (u: string) => (await fetch(u)).blob();
 
 export async function exportBackup(): Promise<string> {
   const data: Record<string, unknown[]> = {};
   for (const t of TABLES) data[t] = await db.table(t).toArray();
+  data.photos = await Promise.all((data.photos as Photo[]).map(async (p) => ({ ...p, blob: await blobToDataURL(p.blob) })));
   return JSON.stringify({ app: 'FitTrack', version: 1, exported: new Date().toISOString(), data });
 }
 
 export async function importBackup(json: string) {
   const parsed = JSON.parse(json);
   if (parsed?.app !== 'FitTrack' || !parsed.data) throw new Error('This is not a FitTrack backup file.');
+  // Photos are stored as data URLs in the file; turn them back into images before the transaction.
+  if (Array.isArray(parsed.data.photos)) {
+    parsed.data.photos = await Promise.all(parsed.data.photos.map(async (p: Photo & { blob: unknown }) =>
+      ({ ...p, blob: typeof p.blob === 'string' ? await dataURLToBlob(p.blob) : p.blob })));
+  }
   await db.transaction('rw', TABLES.map((t) => db.table(t)), async () => {
     for (const t of TABLES) {
+      if (!(t in parsed.data)) continue; // older backups: keep data they don't contain (e.g. photos)
       await db.table(t).clear();
       const rows = parsed.data[t];
       if (Array.isArray(rows) && rows.length) await db.table(t).bulkAdd(rows);

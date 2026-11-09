@@ -1,9 +1,12 @@
-import { useMemo, useState } from 'preact/hooks';
+import { useEffect, useMemo, useState } from 'preact/hooks';
 import { db, MUSCLES, type Exercise, type Workout, type WorkoutEntry } from '../db';
 import { fmt, fmtDate, oneRepMax, toLocalInput } from '../calc';
 import { ActionSheet, ActionRow, Empty, LineChart, NumberInput, Page, Row, Section, Sheet, useLive, useNav } from '../ui';
 import { BookOpen, Dumbbell, Ellipsis, Plus, SearchX, Trash, X } from 'lucide-preact';
 import { Ico } from '../icons';
+import { NextUpCard, PlansScreen } from './Plans';
+import { LIBRARY } from '../plans';
+import { ClipboardList, Info, Timer } from 'lucide-preact';
 
 const useExerciseMap = () => {
   const list = useLive(() => db.exercises.toArray(), [], [] as Exercise[]);
@@ -33,6 +36,13 @@ export function TrainingHome() {
   const exMap = useExerciseMap();
   const [menuFor, setMenuFor] = useState<Workout | null>(null);
 
+  // Plan day screens ask us to open the workout they just created.
+  useEffect(() => {
+    const open = (e: Event) => nav.push(<WorkoutScreen id={(e as CustomEvent<number>).detail} />);
+    window.addEventListener('open-workout', open);
+    return () => window.removeEventListener('open-workout', open);
+  }, [nav.push]);
+
   const newWorkout = async (from?: Workout) => {
     const id = await db.workouts.add({
       date: Date.now(), title: from?.title ?? 'Workout', notes: '',
@@ -43,7 +53,12 @@ export function TrainingHome() {
 
   return (
     <Page title="Training" actions={<button class="icon-link" aria-label="New workout" onClick={() => newWorkout()}><Ico icon={Plus} size={26} grad="main" /></button>}>
+      <NextUpCard onStart={(id) => nav.push(<WorkoutScreen id={id} />)} />
       <Section>
+        <Row chevron onClick={() => nav.push(<PlansScreen />)}>
+          <span class="icon-badge violet"><Ico icon={ClipboardList} size={18} /></span>
+          <div class="row-main">Training Plans<div class="sub small">3 plans built for your gear, goals and shoulders</div></div>
+        </Row>
         <Row chevron onClick={() => nav.push(<ExerciseLibrary />)}>
           <span class="icon-badge"><Ico icon={BookOpen} size={18} /></span>
           <span class="row-main">Exercise Library</span>
@@ -56,7 +71,7 @@ export function TrainingHome() {
             <div class="row-main">
               <div class="row-title-line"><b>{w.title || 'Workout'}</b><span class="sub">{fmtDate(w.date)}</span></div>
               <div class="sub clamp2">{w.entries.map((e) => exMap.get(e.exerciseId)?.name ?? 'Deleted exercise').join(' · ')}</div>
-              <div class="sub small">{setCount(w)} sets · {fmt(volume(w), 0)} kg volume</div>
+              <div class="sub small">{setCount(w)} {setCount(w) === 1 ? 'set' : 'sets'} · {fmt(volume(w), 0)} kg volume</div>
             </div>
             <span class="icon-btn" onClick={(e) => { e.stopPropagation(); setMenuFor(w); }}><Ico icon={Ellipsis} size={20} /></span>
           </Row>
@@ -79,6 +94,7 @@ function WorkoutScreen({ id }: { id: number }) {
   const exMap = useExerciseMap();
   const [picker, setPicker] = useState(false);
   const [menuIndex, setMenuIndex] = useState<number | null>(null);
+  const [cueFor, setCueFor] = useState<number | null>(null);
 
   if (!workout) return <Page title="Workout"><div /></Page>;
 
@@ -114,6 +130,20 @@ function WorkoutScreen({ id }: { id: number }) {
         return (
           <Section key={ei} title={ex?.name ?? 'Deleted exercise'}
             right={<button class="icon-link" aria-label="Exercise options" onClick={() => setMenuIndex(ei)}><Ico icon={Ellipsis} size={20} grad="main" /></button>}>
+            {entry.target && (
+              <div class="target-line">
+                <span class="pill"><Ico icon={ClipboardList} size={13} />{entry.target}</span>
+                {entry.rest && <span class="pill"><Ico icon={Timer} size={13} />rest {entry.rest >= 60 ? `${fmt(entry.rest / 60, 1)} min` : `${entry.rest} s`}</span>}
+                {ex && LIBRARY.some((l) => l.name === ex.name) && (
+                  <button class="pill tappable-pill" onClick={() => setCueFor(cueFor === ei ? null : ei)}><Ico icon={Info} size={13} />How to</button>
+                )}
+              </div>
+            )}
+            {entry.note && <div class="hint accent">{entry.note}</div>}
+            {cueFor === ei && ex && (() => {
+              const l = LIBRARY.find((x) => x.name === ex.name);
+              return l ? <div class="hint cue">{l.cue}{l.shoulder && <div class="warn">{l.shoulder}</div>}</div> : null;
+            })()}
             {prev && <div class="hint">Last time ({fmtDate(prev.w.date)}): {summary(prev.e)}</div>}
             <div class="set-head"><span>Set</span><span>Reps</span><span>kg</span><span /></div>
             {entry.sets.map((s, si) => (

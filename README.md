@@ -4,8 +4,9 @@ A fitness tracker web app for iPhone: install it from Safari with **Share → Ad
 
 | Tab | What it does |
 |---|---|
-| **Training** | 94 built-in exercises plus custom ones. Log sets × reps × kg. Prefills last time's numbers, shows "Last time: …", personal records and an estimated-1RM chart per exercise. Repeat past workouts. |
-| **Weight** | Weigh-ins, trend chart with goal line, 7-day average, BMI and healthy range. |
+| **Training** | 3 home-gym training plans (Full Body 3×, Upper/Lower 4×, Glute & Quad Priority 5×) built around a fixed plate setup, with warm-ups, technique cues, weekly volume per muscle and pull/push shoulder balance. 130 exercises plus custom ones. Log sets × reps × kg. Prefills last time's numbers, shows "Last time: …", personal records and an estimated-1RM chart per exercise. Repeat past workouts. |
+| **Yoga** | 6 guided routines (hamstrings, daily leg mobility, Pilates core, shoulder mobility, Blackroll recovery, evening wind-down) with timer player, a 4-week leg mobility program and a toe-touch flexibility tracker. |
+| **Weight** | Trend graph first, stats, weigh-in list, and a progress-photo journal with ghost-overlay camera, self-timer and before/after slider. |
 | **Nutrition** | Daily log by meal. **Barcode scanning** (📷) with product data from Open Food Facts, 75 built-in foods (per 100 g), your own foods, manual entry, calories and macros against your targets. |
 | **Routes** | Record walks/runs/rides with GPS (screen must stay on: a pocket lock blocks accidental taps). Plan routes on an OpenStreetMap map with foot or bike routing. GPX import and export. |
 | **Profile** | Body data and goal → BMI, BMR (Mifflin-St Jeor), maintenance and goal calories, macros, time to goal. Backup & restore of all data. |

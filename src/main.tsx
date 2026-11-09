@@ -8,14 +8,16 @@ import { WeightHome } from './tabs/Weight';
 import { NutritionHome } from './tabs/Nutrition';
 import { RoutesHome } from './tabs/Routes';
 import { ProfileHome } from './tabs/Profile';
+import { YogaHome } from './tabs/Yoga';
 import { recorder } from './recorder';
-import { Dumbbell, Map as MapIcon, Scale, UserRound, Utensils, type LucideIcon } from 'lucide-preact';
+import { Dumbbell, Flower2, Map as MapIcon, Scale, UserRound, Utensils, type LucideIcon } from 'lucide-preact';
 import { GradientDefs, Ico } from './icons';
 
-type TabKey = 'training' | 'weight' | 'nutrition' | 'routes' | 'profile';
+type TabKey = 'training' | 'yoga' | 'weight' | 'nutrition' | 'routes' | 'profile';
 
 const TABS: { key: TabKey; label: string; icon: LucideIcon; root: () => preact.VNode }[] = [
   { key: 'training', label: 'Training', icon: Dumbbell, root: () => <TrainingHome /> },
+  { key: 'yoga', label: 'Yoga', icon: Flower2, root: () => <YogaHome /> },
   { key: 'weight', label: 'Weight', icon: Scale, root: () => <WeightHome /> },
   { key: 'nutrition', label: 'Nutrition', icon: Utensils, root: () => <NutritionHome /> },
   { key: 'routes', label: 'Routes', icon: MapIcon, root: () => <RoutesHome /> },

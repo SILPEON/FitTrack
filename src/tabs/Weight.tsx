@@ -3,6 +3,7 @@ import { Plus, Scale, Trash, TrendingDown, TrendingUp } from 'lucide-preact';
 import { db, getProfile, DEFAULT_PROFILE, type Profile, type WeightEntry } from '../db';
 import { bmi, bmiCategory, dayKey, fmt, fmtDate, healthyRange } from '../calc';
 import { Ico } from '../icons';
+import { PhotosCard } from './Photos';
 import { Empty, LineChart, NumberInput, Page, Row, Section, Segmented, Sheet, useLive } from '../ui';
 
 type Range = '30' | '90' | '365' | 'all';
@@ -29,11 +30,12 @@ export function WeightHome() {
 
   return (
     <Page title="Weight" actions={<button class="icon-link" aria-label="Log weight" onClick={() => setAdding(true)}><Ico icon={Plus} size={26} grad="main" /></button>}>
-      {entries.length === 0 ? (
+      {entries.length === 0 ? (<>
         <Section>
           <Empty icon={Scale} title="No weight logged" text="Tap + to add your first weigh-in. Your trend graph appears here." />
         </Section>
-      ) : (
+        <PhotosCard />
+      </>) : (
         <>
           {/* Graph first */}
           <Section>
@@ -77,6 +79,8 @@ export function WeightHome() {
               value={`${fmt(healthyRange(profile.heightCm)[0])}–${fmt(healthyRange(profile.heightCm)[1])} kg`} />
             {target != null && <Row label="Target weight" value={`${fmt(target)} kg`} />}
           </Section>
+
+          <PhotosCard />
 
           {/* Detailed list last */}
           <Section title="All weigh-ins" right={`${entries.length}`}>
