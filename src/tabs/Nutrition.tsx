@@ -1,7 +1,15 @@
-import { useState } from 'preact/hooks';
+import { useEffect, useState } from 'preact/hooks';
 import { db, getProfile, MEALS, type Food, type FoodLog, type Meal, type Profile, type WeightEntry } from '../db';
 import { dayKey, fmt, shiftDay, targets, type Targets } from '../calc';
 import { Bar, NumberInput, Page, Row, Section, Segmented, Sheet, useLive } from '../ui';
+import type { BarcodeScanner as ScannerType } from '../scanner';
+import { lookupBarcode } from '../off';
+
+/** Meal suggestion for a scan started from the top bar, based on the time of day. */
+const mealNow = (): Meal => {
+  const h = new Date().getHours() + new Date().getMinutes() / 60;
+  return h < 10.5 ? 'breakfast' : h < 15 ? 'lunch' : h >= 17.5 && h < 21.5 ? 'dinner' : 'snack';
+};
 
 interface Totals { kcal: number; protein: number; carbs: number; fat: number; fiber: number }
 const sum = (items: FoodLog[]): Totals => items.reduce((t, e) => ({
@@ -24,10 +32,11 @@ export function NutritionHome() {
   }, [], null as Targets | null);
   const [addMeal, setAddMeal] = useState<Meal | null>(null);
   const [editing, setEditing] = useState<FoodLog | null>(null);
+  const [scanning, setScanning] = useState(false);
   const totals = sum(entries);
 
   return (
-    <Page title="Nutrition">
+    <Page title="Nutrition" actions={<button class="link big" aria-label="Scan barcode" onClick={() => setScanning(true)}>📷</button>}>
       <div class="day-nav">
         <button class="link big" onClick={() => setDay(shiftDay(day, -1))}>‹</button>
         <label class="day-label">
@@ -69,7 +78,7 @@ export function NutritionHome() {
           <Section key={m.key} title={m.label} right={`${fmt(sum(items).kcal, 0)} kcal`}>
             {items.map((e) => (
               <Row key={e.id} onClick={() => setEditing(e)} label={e.name}
-                sub={`${fmt(e.grams, 0)} g · P ${fmt(e.protein, 0)} · C ${fmt(e.carbs, 0)} · F ${fmt(e.fat, 0)}`}
+                sub={`${fmt(e.grams, 0)} ${e.unit ?? 'g'} · P ${fmt(e.protein, 0)} · C ${fmt(e.carbs, 0)} · F ${fmt(e.fat, 0)}`}
                 value={`${fmt(e.kcal, 0)} kcal`} />
             ))}
             <Row onClick={() => setAddMeal(m.key)}><span class="accent">＋ Add food</span></Row>
@@ -79,6 +88,7 @@ export function NutritionHome() {
 
       {addMeal && <AddFood meal={addMeal} day={day} onClose={() => setAddMeal(null)} />}
       {editing && <EditEntry entry={editing} onClose={() => setEditing(null)} />}
+      {scanning && <ScanFlow meal={mealNow()} day={day} onClose={() => setScanning(false)} />}
     </Page>
   );
 }
@@ -97,8 +107,10 @@ function timeFor(day: string) {
 function AddFood({ meal, day, onClose }: { meal: Meal; day: string; onClose: () => void }) {
   const [mode, setMode] = useState<'db' | 'manual'>('db');
   const [picked, setPicked] = useState<Food | null>(null);
+  const [scan, setScan] = useState(false);
   const mealLabel = MEALS.find((m) => m.key === meal)!.label;
 
+  if (scan) return <ScanFlow meal={meal} day={day} onClose={() => setScan(false)} onDone={onClose} />;
   if (picked) return <FoodAmount food={picked} meal={meal} day={day} onBack={() => setPicked(null)} onDone={onClose} />;
 
   return (
@@ -106,6 +118,9 @@ function AddFood({ meal, day, onClose }: { meal: Meal; day: string; onClose: () 
       <div class="pad">
         <Segmented value={mode} onChange={setMode} options={[{ key: 'db', label: 'Food database' }, { key: 'manual', label: 'Manual entry' }]} />
       </div>
+      {mode === 'db' && (
+        <Section><Row onClick={() => setScan(true)}><span class="accent bold">📷 Scan barcode</span></Row></Section>
+      )}
       {mode === 'db' ? <FoodSearch onPick={setPicked} /> : <ManualFood meal={meal} day={day} onDone={onClose} />}
     </Sheet>
   );
@@ -118,7 +133,7 @@ function FoodSearch({ onPick }: { onPick: (f: Food) => void }) {
   const filtered = q ? foods.filter((f) => f.name.toLowerCase().includes(q.toLowerCase())) : foods;
   const row = (f: Food) => (
     <Row key={f.id} chevron onClick={() => onPick(f)} label={<>{f.name}{f.custom && <span class="tag">Mine</span>}</>}
-      sub={`${fmt(f.kcal, 0)} kcal · P ${fmt(f.protein)} · C ${fmt(f.carbs)} · F ${fmt(f.fat)}`} />
+      sub={`${fmt(f.kcal, 0)} kcal${f.unit === 'ml' ? ' /100 ml' : ''} · P ${fmt(f.protein)} · C ${fmt(f.carbs)} · F ${fmt(f.fat)}`} />
   );
   return (
     <>
@@ -134,27 +149,46 @@ function FoodSearch({ onPick }: { onPick: (f: Food) => void }) {
   );
 }
 
-function FoodAmount({ food, meal, day, onBack, onDone }: { food: Food; meal: Meal; day: string; onBack: () => void; onDone: () => void }) {
-  const [grams, setGrams] = useState<number | null>(100);
+function FoodAmount({ food, meal: initialMeal, day, onBack, onDone, chooseMeal }: {
+  food: Food; meal: Meal; day: string; onBack: () => void; onDone: () => void; chooseMeal?: boolean;
+}) {
+  const [grams, setGrams] = useState<number | null>(food.servingG ?? 100);
+  const [meal, setMeal] = useState<Meal>(initialMeal);
+  const unit = food.unit ?? 'g';
   const f = (grams ?? 0) / 100;
+  const quick: { label: string; g: number }[] = [
+    ...(food.servingG ? [{ label: `1 serving (${fmt(food.servingG)} ${unit})`, g: food.servingG }] : []),
+    ...(food.packageG ? [{ label: `Whole pack (${fmt(food.packageG)} ${unit})`, g: food.packageG }] : []),
+    ...[30, 50, 100, 150, 200, 250].map((g) => ({ label: `${g} ${unit}`, g })),
+  ];
   const add = async () => {
     await db.foodLog.add({
-      day, meal, name: food.name, grams: grams ?? 0, time: timeFor(day),
+      day, meal, name: food.name, grams: grams ?? 0, unit, time: timeFor(day),
       kcal: food.kcal * f, protein: food.protein * f, carbs: food.carbs * f, fat: food.fat * f, fiber: food.fiber * f,
     } as FoodLog);
     await db.foods.update(food.id, { lastUsed: Date.now() });
     onDone();
   };
   return (
-    <Sheet open onClose={onBack} title={food.name}
+    <Sheet open onClose={onBack} title={food.barcode ? 'Scanned product' : food.name}
       actions={<button class="link bold" disabled={!grams || grams <= 0} onClick={add}>Add</button>}>
+      {food.barcode && (
+        <Section>
+          <Row label={<b>{food.name}</b>} sub={`Barcode ${food.barcode} · per 100 ${unit}: ${fmt(food.kcal, 0)} kcal`} />
+        </Section>
+      )}
+      {chooseMeal && (
+        <div class="pad">
+          <Segmented value={meal} onChange={setMeal} options={MEALS.map((m) => ({ key: m.key, label: m.label }))} />
+        </div>
+      )}
       <Section title="Amount">
         <Row>
           <NumberInput value={grams} onChange={setGrams} class="wide big-input" />
-          <span class="unit">g</span>
+          <span class="unit">{unit}</span>
         </Row>
-        <div class="chips pad">
-          {[30, 50, 100, 150, 200, 250].map((g) => <button class="chip" onClick={() => setGrams(g)}>{g} g</button>)}
+        <div class="chips pad wrap">
+          {quick.map((q) => <button class={grams === q.g ? 'chip active' : 'chip'} onClick={() => setGrams(q.g)}>{q.label}</button>)}
         </div>
       </Section>
       <Section title="Nutrients for this amount">
@@ -164,7 +198,7 @@ function FoodAmount({ food, meal, day, onBack, onDone }: { food: Food; meal: Mea
         <Row label="Fat" value={`${fmt(food.fat * f)} g`} />
         <Row label="Fiber" value={`${fmt(food.fiber * f)} g`} />
       </Section>
-      <Section>
+      <Section footer={food.barcode ? 'Product data from Open Food Facts (community-maintained). Check it against the label the first time; if it is wrong, delete it below and enter it manually.' : undefined}>
         <Row onClick={add}><span class="accent bold">Add to {MEALS.find((m) => m.key === meal)!.label}</span></Row>
         {food.custom && (
           <Row onClick={async () => { if (confirm(`Delete "${food.name}" from your foods?`)) { await db.foods.delete(food.id); onBack(); } }}>
@@ -176,8 +210,63 @@ function FoodAmount({ food, meal, day, onBack, onDone }: { food: Food; meal: Mea
   );
 }
 
-function ManualFood({ meal, day, onDone }: { meal: Meal; day: string; onDone: () => void }) {
-  const [name, setName] = useState('');
+/** Scan → look up → choose amount. Falls back to manual entry when the product is unknown. */
+function ScanFlow({ meal, day, onClose, onDone }: { meal: Meal; day: string; onClose: () => void; onDone?: () => void }) {
+  type Step =
+    | { s: 'scan' } | { s: 'loading'; code: string } | { s: 'amount'; food: Food }
+    | { s: 'manual'; code: string; name: string; unit: 'g' | 'ml'; note: string };
+  const [step, setStep] = useState<Step>({ s: 'scan' });
+  // The scanner library is large, so it's only downloaded when you first tap scan.
+  const [Scanner, setScanner] = useState<typeof ScannerType | null>(null);
+  useEffect(() => {
+    import('../scanner').then((m) => setScanner(() => m.BarcodeScanner)).catch(() => {
+      alert('Could not load the scanner. Check your internet connection and try again.');
+      onClose();
+    });
+  }, []);
+  const finish = onDone ?? onClose;
+
+  const onCode = async (code: string) => {
+    setStep({ s: 'loading', code });
+    const r = await lookupBarcode(code);
+    if (r.status === 'found') setStep({ s: 'amount', food: r.food });
+    else if (r.status === 'incomplete') setStep({ s: 'manual', code, name: r.brand ? `${r.name} (${r.brand})` : r.name, unit: r.unit,
+      note: 'Open Food Facts knows this product but has no complete nutrition values. Enter them from the label once; next time the scan fills them in.' });
+    else if (r.status === 'not-found') setStep({ s: 'manual', code, name: '', unit: 'g',
+      note: 'This product is not in Open Food Facts yet. Enter it from the label once; next time the scan finds it in your foods.' });
+    else {
+      alert('No internet connection, and this product is not saved on your phone yet. Try again when you are online, or enter it manually.');
+      setStep({ s: 'scan' });
+    }
+  };
+
+  if (step.s === 'scan') {
+    return Scanner
+      ? <Scanner onCode={onCode} onClose={onClose} />
+      : <Sheet open onClose={onClose} title="Starting camera…"><div class="empty"><span class="spinner" /></div></Sheet>;
+  }
+  if (step.s === 'loading') {
+    return (
+      <Sheet open onClose={onClose} title="Looking up…">
+        <div class="empty"><span class="spinner" /><div class="sub">Barcode {step.code}</div></div>
+      </Sheet>
+    );
+  }
+  if (step.s === 'amount') {
+    return <FoodAmount food={step.food} meal={meal} day={day} chooseMeal onBack={onClose} onDone={finish} />;
+  }
+  return (
+    <Sheet open onClose={onClose} title="New product">
+      <div class="hint">{step.note}</div>
+      <ManualFood meal={meal} day={day} onDone={finish} barcode={step.code} initialName={step.name} unit={step.unit} />
+    </Sheet>
+  );
+}
+
+function ManualFood({ meal, day, onDone, barcode, initialName = '', unit = 'g' }: {
+  meal: Meal; day: string; onDone: () => void; barcode?: string; initialName?: string; unit?: 'g' | 'ml';
+}) {
+  const [name, setName] = useState(initialName);
   const [v, setV] = useState<Record<string, number | null>>({ grams: 100, kcal: null, protein: null, carbs: null, fat: null, fiber: null });
   const [saveFood, setSaveFood] = useState(true);
   const set = (k: string) => (x: number | null) => setV((o) => ({ ...o, [k]: x }));
@@ -187,14 +276,14 @@ function ManualFood({ meal, day, onDone }: { meal: Meal; day: string; onDone: ()
   const add = async () => {
     if (!valid) return;
     await db.foodLog.add({
-      day, meal, name: name.trim(), grams: n('grams'), time: timeFor(day),
+      day, meal, name: name.trim(), grams: n('grams'), unit, time: timeFor(day),
       kcal: n('kcal'), protein: n('protein'), carbs: n('carbs'), fat: n('fat'), fiber: n('fiber'),
     } as FoodLog);
     if (saveFood && n('grams') > 0) {
       const k = 100 / n('grams');
       await db.foods.add({
         name: name.trim(), kcal: n('kcal') * k, protein: n('protein') * k, carbs: n('carbs') * k,
-        fat: n('fat') * k, fiber: n('fiber') * k, custom: true, lastUsed: Date.now(),
+        fat: n('fat') * k, fiber: n('fiber') * k, custom: true, lastUsed: Date.now(), barcode, unit,
       } as Food);
     }
     onDone();
@@ -212,7 +301,7 @@ function ManualFood({ meal, day, onDone }: { meal: Meal; day: string; onDone: ()
     <>
       <Section>
         <Row><input class="text-input" placeholder="Food name" value={name} onInput={(e) => setName((e.target as HTMLInputElement).value)} /></Row>
-        {field('Amount', 'grams', 'g')}
+        {field('Amount', 'grams', unit)}
       </Section>
       <Section title="Nutrients for this amount (from the label)">
         {field('Calories', 'kcal', 'kcal')}
@@ -222,6 +311,7 @@ function ManualFood({ meal, day, onDone }: { meal: Meal; day: string; onDone: ()
         {field('Fiber', 'fiber', 'g')}
       </Section>
       <Section footer="Saved foods are stored per 100 g so you can log any amount later.">
+        {barcode && <Row label="Barcode" value={barcode} />}
         <Row>
           <span class="row-main">Save to my food database</span>
           <input type="checkbox" class="switch" checked={saveFood} onChange={(e) => setSaveFood((e.target as HTMLInputElement).checked)} />
@@ -249,7 +339,7 @@ function EditEntry({ entry, onClose }: { entry: FoodLog; onClose: () => void }) 
     <Sheet open onClose={onClose} title={entry.name} actions={<button class="link bold" onClick={save}>Save</button>}>
       {entry.grams > 0 && (
         <Section title="Amount">
-          <Row><NumberInput value={grams} onChange={setGrams} class="wide big-input" /><span class="unit">g</span></Row>
+          <Row><NumberInput value={grams} onChange={setGrams} class="wide big-input" /><span class="unit">{entry.unit ?? 'g'}</span></Row>
         </Section>
       )}
       <Section>

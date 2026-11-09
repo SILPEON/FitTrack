@@ -10,14 +10,18 @@ export interface WorkoutEntry { exerciseId: number; sets: SetEntry[] }
 export interface Workout { id: number; date: number; title: string; notes: string; entries: WorkoutEntry[] }
 export interface WeightEntry { id: number; day: string; kg: number }
 /** Nutrients per 100 g. */
-export interface Food { id: number; name: string; kcal: number; protein: number; carbs: number; fat: number; fiber: number; custom: boolean; lastUsed?: number }
+export interface Food {
+  id: number; name: string; kcal: number; protein: number; carbs: number; fat: number; fiber: number; custom: boolean; lastUsed?: number;
+  /** Set for scanned products (EAN/UPC). */
+  barcode?: string; brand?: string; unit?: 'g' | 'ml'; servingG?: number; packageG?: number;
+}
 export type Meal = 'breakfast' | 'lunch' | 'dinner' | 'snack';
 export const MEALS: { key: Meal; label: string }[] = [
   { key: 'breakfast', label: 'Breakfast' }, { key: 'lunch', label: 'Lunch' },
   { key: 'dinner', label: 'Dinner' }, { key: 'snack', label: 'Snacks' },
 ];
 /** A logged food; values are absolute for the logged amount. */
-export interface FoodLog { id: number; day: string; meal: Meal; name: string; grams: number; kcal: number; protein: number; carbs: number; fat: number; fiber: number; time: number }
+export interface FoodLog { id: number; day: string; meal: Meal; name: string; grams: number; unit?: 'g' | 'ml'; kcal: number; protein: number; carbs: number; fat: number; fiber: number; time: number }
 export type Activity = 'walk' | 'run' | 'bike';
 /** [lat, lon, altitude|null, timestamp|null] */
 export type Pt = [number, number, number | null, number | null];
@@ -43,6 +47,9 @@ db.version(1).stores({
   routes: '++id, date',
   kv: 'key',
 });
+
+// v2: barcode index for scanned products.
+db.version(2).stores({ foods: '++id, name, lastUsed, barcode' });
 
 db.on('populate', (tx) => {
   tx.table('exercises').bulkAdd(EXERCISES.map(([name, muscle, equipment]) => ({ name, muscle, equipment, custom: false })));

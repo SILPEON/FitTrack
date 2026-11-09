@@ -6,7 +6,7 @@ A fitness tracker web app for iPhone: install it from Safari with **Share → Ad
 |---|---|
 | **Training** | 94 built-in exercises plus custom ones. Log sets × reps × kg. Prefills last time's numbers, shows "Last time: …", personal records and an estimated-1RM chart per exercise. Repeat past workouts. |
 | **Weight** | Weigh-ins, trend chart with goal line, 7-day average, BMI and healthy range. |
-| **Nutrition** | Daily log by meal, 75 built-in foods (per 100 g), your own foods, manual entry, calories and macros against your targets. |
+| **Nutrition** | Daily log by meal. **Barcode scanning** (📷) with product data from Open Food Facts, 75 built-in foods (per 100 g), your own foods, manual entry, calories and macros against your targets. |
 | **Routes** | Record walks/runs/rides with GPS (screen must stay on: a pocket lock blocks accidental taps). Plan routes on an OpenStreetMap map with foot or bike routing. GPX import and export. |
 | **Profile** | Body data and goal → BMI, BMR (Mifflin-St Jeor), maintenance and goal calories, macros, time to goal. Backup & restore of all data. |
 
@@ -22,7 +22,7 @@ A fitness tracker web app for iPhone: install it from Safari with **Share → Ad
 - **Route recording needs the screen on and FitTrack in front.** iOS pauses GPS for web apps when the phone is locked.
 - Data lives only in the home-screen app. **Deleting the icon deletes the data**: use Profile → Save backup regularly.
 - Food values are typical USDA values (approximate).
-- Maps © OpenStreetMap contributors; routing by FOSSGIS OSRM servers; place search by Nominatim.
+- Maps © OpenStreetMap contributors; routing by FOSSGIS OSRM servers; place search by Nominatim; product data from Open Food Facts (ODbL).
 
 ## Development
 ```
