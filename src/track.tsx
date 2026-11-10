@@ -4,10 +4,11 @@ import { fmtDuration } from './calc';
 import { segmentAt, tensionAt, type Segment } from './kegel';
 import { Ico } from './icons';
 import { Overlay } from './ui';
+import { rgbOf } from './theme';
 
-export /** Cyan → violet → pink, matching the app icon. */
+export /** The theme's main gradient (cyan → violet → pink in Aurora). */
 function tensionColor(v: number, alpha = 1) {
-  const stops = [[54, 198, 255], [139, 92, 246], [255, 79, 154]];
+  const stops = [rgbOf('--p1'), rgbOf('--p2'), rgbOf('--p3')];
   const x = Math.max(0, Math.min(1, v)) * 2;
   const i = Math.min(1, Math.floor(x));
   const k = x - i;

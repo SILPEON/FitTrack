@@ -228,10 +228,10 @@ export function LineChart({ points, target, height = 200, unit = '' }: {
     <svg class="chart" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{ height: `${H}px` }}>
       <defs>
         <linearGradient id={`${id}-l`} gradientUnits="userSpaceOnUse" x1={padL} y1="0" x2={W - padR} y2="0">
-          <stop offset="0" stop-color="#36c6ff" /><stop offset="0.5" stop-color="#8b5cf6" /><stop offset="1" stop-color="#ff4f9a" />
+          <stop offset="0" style={{ stopColor: 'var(--p1)' }} /><stop offset="0.5" style={{ stopColor: 'var(--p2)' }} /><stop offset="1" style={{ stopColor: 'var(--p3)' }} />
         </linearGradient>
         <linearGradient id={`${id}-a`} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0" stop-color="#8b5cf6" stop-opacity="0.28" /><stop offset="1" stop-color="#8b5cf6" stop-opacity="0" />
+          <stop offset="0" style={{ stopColor: 'var(--p2)', stopOpacity: 0.28 }} /><stop offset="1" style={{ stopColor: 'var(--p2)', stopOpacity: 0 }} />
         </linearGradient>
       </defs>
       {ticks.map((t) => (
