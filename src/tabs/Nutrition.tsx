@@ -2,7 +2,7 @@ import { useEffect, useState } from 'preact/hooks';
 import { db, getProfile, MEALS, type Food, type FoodLog, type Meal, type Profile, type WeightEntry } from '../db';
 import { dayKey, fmt, shiftDay, targets, type Targets } from '../calc';
 import { ActionRow, Bar, NumberInput, Page, Row, Section, Segmented, Sheet, useLive } from '../ui';
-import { ChevronLeft, ChevronRight, Plus, ScanBarcode, Trash } from 'lucide-preact';
+import { ChevronLeft, ChevronRight, Minus, Plus, ScanBarcode, Trash } from 'lucide-preact';
 import { Ico } from '../icons';
 import type { BarcodeScanner as ScannerType } from '../scanner';
 import { lookupBarcode } from '../off';
@@ -158,8 +158,12 @@ function FoodAmount({ food, meal: initialMeal, day, onBack, onDone, chooseMeal }
   const [meal, setMeal] = useState<Meal>(initialMeal);
   const unit = food.unit ?? 'g';
   const f = (grams ?? 0) / 100;
+  const serving = food.servingG && food.servingG > 0 ? food.servingG : null;
+  // Servings and grams are two views of the same amount; grams is what gets stored.
+  const servings = serving && grams != null ? Math.round((grams / serving) * 100) / 100 : null;
+  const setServings = (n: number | null) => setGrams(n == null || !serving ? null : Math.round(n * serving * 10) / 10);
+  const stepServings = (d: number) => setServings(Math.max(0.5, Math.round(((servings ?? 0) + d) * 2) / 2));
   const quick: { label: string; g: number }[] = [
-    ...(food.servingG ? [{ label: `1 serving (${fmt(food.servingG)} ${unit})`, g: food.servingG }] : []),
     ...(food.packageG ? [{ label: `Whole pack (${fmt(food.packageG)} ${unit})`, g: food.packageG }] : []),
     ...[30, 50, 100, 150, 200, 250].map((g) => ({ label: `${g} ${unit}`, g })),
   ];
@@ -185,10 +189,21 @@ function FoodAmount({ food, meal: initialMeal, day, onBack, onDone, chooseMeal }
         </div>
       )}
       <Section title="Amount">
+        {serving && (
+          <Row>
+            <NumberInput value={servings} onChange={setServings} class="wide big-input" />
+            <span class="unit">{servings === 1 ? 'serving' : 'servings'}</span>
+            <span class="stepper">
+              <button onClick={() => stepServings(-0.5)} disabled={(servings ?? 0) <= 0.5} aria-label="Half a serving less"><Ico icon={Minus} size={18} /></button>
+              <button onClick={() => stepServings(0.5)} aria-label="Half a serving more"><Ico icon={Plus} size={18} /></button>
+            </span>
+          </Row>
+        )}
         <Row>
           <NumberInput value={grams} onChange={setGrams} class="wide big-input" />
           <span class="unit">{unit}</span>
         </Row>
+        {serving && <div class="sub small amount-hint">1 serving = {fmt(serving)} {unit}</div>}
         <div class="chips pad wrap">
           {quick.map((q) => <button class={grams === q.g ? 'chip active' : 'chip'} onClick={() => setGrams(q.g)}>{q.label}</button>)}
         </div>

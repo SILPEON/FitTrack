@@ -517,3 +517,4 @@ select { border: 0; background: var(--fill); border-radius: 9px; padding: 6px 10
 
 .kegel-player .player-top { justify-content: space-between; }
 .kegel-player .player-controls { padding-top: 10px; }
+.amount-hint { padding: 2px 16px 6px; }
