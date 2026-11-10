@@ -7,17 +7,17 @@ import type { LucideIcon } from 'lucide-preact';
  */
 export function GradientDefs() {
   const stops = {
-    main: ['#36c6ff', '#8b5cf6', '#ff4f9a'],
-    warm: ['#ff4f9a', '#ff8a4c', '#ffbe55'],
-    cool: ['#36c6ff', '#5b7bff', '#8b5cf6'],
-    fresh: ['#2ee6b0', '#36c6ff'],
+    main: ['--p1', '--p2', '--p3'],
+    warm: ['--p3', '--p4', '--p5'],
+    cool: ['--p1', '--p7', '--p2'],
+    fresh: ['--p6', '--p1'],
   };
   return (
     <svg width="0" height="0" style={{ position: 'absolute' }} aria-hidden="true" focusable="false">
       <defs>
         {Object.entries(stops).map(([id, colors]) => (
           <linearGradient id={`g-${id}`} gradientUnits="userSpaceOnUse" x1="2" y1="2" x2="22" y2="22">
-            {colors.map((c, i) => <stop offset={i / (colors.length - 1)} stop-color={c} />)}
+            {colors.map((c, i) => <stop offset={i / (colors.length - 1)} style={{ stopColor: `var(${c})` }} />)}
           </linearGradient>
         ))}
       </defs>

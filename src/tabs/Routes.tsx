@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from 'preact/hooks';
+import { cssColor } from '../theme';
 import L from 'leaflet';
 import { db, type Activity, type Pt, type Route } from '../db';
 import { ACTIVITIES, activityInfo, fmt, fmtDate, fmtDistance, fmtDuration, fmtPace, fmtSpeed, parseGPX, pathDistance, shareFile, toGPX } from '../calc';
@@ -115,9 +116,9 @@ export function RouteDetail({ id }: { id: number }) {
         <MapBox class="map" onReady={(map) => {
           const latlngs = route.points.map((p) => [p[0], p[1]] as [number, number]);
           if (latlngs.length) {
-            const line = L.polyline(latlngs, { color: route.planned ? '#8b5cf6' : '#4f7bff', weight: 5 }).addTo(map);
-            L.marker(latlngs[0], { icon: dotIcon('S', '#22d3a0') }).addTo(map);
-            L.marker(latlngs[latlngs.length - 1], { icon: dotIcon('E', '#ff4f9a') }).addTo(map);
+            const line = L.polyline(latlngs, { color: route.planned ? cssColor('--p2') : cssColor('--p7'), weight: 5 }).addTo(map);
+            L.marker(latlngs[0], { icon: dotIcon('S', cssColor('--p6')) }).addTo(map);
+            L.marker(latlngs[latlngs.length - 1], { icon: dotIcon('E', cssColor('--p3')) }).addTo(map);
             map.fitBounds(line.getBounds(), { padding: [24, 24] });
           }
         }} />
@@ -208,11 +209,11 @@ function RecordScreen({ guide }: { guide?: Pt[] }) {
         <MapBox onReady={(map) => {
           mapRef.current = map;
           if (guide?.length) {
-            const g = L.polyline(guide.map((p) => [p[0], p[1]] as [number, number]), { color: '#8b5cf6', weight: 6, opacity: 0.6, dashArray: '8 8' }).addTo(map);
+            const g = L.polyline(guide.map((p) => [p[0], p[1]] as [number, number]), { color: cssColor('--p2'), weight: 6, opacity: 0.6, dashArray: '8 8' }).addTo(map);
             map.fitBounds(g.getBounds(), { padding: [24, 24] });
             follow.current = false;
           }
-          trackRef.current = L.polyline([], { color: '#4f7bff', weight: 5 }).addTo(map);
+          trackRef.current = L.polyline([], { color: cssColor('--p7'), weight: 5 }).addTo(map);
           map.on('dragstart', () => { follow.current = false; });
         }} />
         <button class="map-btn" onClick={() => {
@@ -327,8 +328,8 @@ function PlannerScreen() {
     const layer = layerRef.current;
     if (!layer) return;
     layer.clearLayers();
-    if (path.length > 1) L.polyline(path, { color: '#8b5cf6', weight: 5 }).addTo(layer);
-    waypoints.forEach((w, i) => L.marker(w, { icon: dotIcon(String(i + 1), i === 0 ? '#22d3a0' : '#8b5cf6') }).addTo(layer));
+    if (path.length > 1) L.polyline(path, { color: cssColor('--p2'), weight: 5 }).addTo(layer);
+    waypoints.forEach((w, i) => L.marker(w, { icon: dotIcon(String(i + 1), i === 0 ? cssColor('--p6') : cssColor('--p2')) }).addTo(layer));
   });
 
   const save = async () => {
