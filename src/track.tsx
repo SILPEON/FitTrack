@@ -146,6 +146,23 @@ export function TrackPlayer({ segments, total, yLabels = ['0%', '25%', '50%', '7
   );
 }
 
+/**
+ * Length of the drawn path (in px) from the session start to time t. Time only moves forward,
+ * so it is accumulated incrementally; it restarts when the session or the canvas size changes.
+ */
+const arc = { segments: null as Segment[] | null, pps: 0, ph: 0, t: 0, len: 0 };
+function travelled(segments: Segment[], t: number, pps: number, ph: number) {
+  if (arc.segments !== segments || arc.pps !== pps || arc.ph !== ph || t < arc.t) Object.assign(arc, { segments, pps, ph, t: 0, len: 0 });
+  const dt = 2 / pps; // 2 px steps, matching how the path is drawn
+  while (arc.t < t) {
+    const t2 = Math.min(t, arc.t + dt);
+    const dx = (t2 - arc.t) * pps;
+    const dy = (tensionAt(segments, t2) - tensionAt(segments, arc.t)) * ph;
+    arc.len += Math.hypot(dx, dy); arc.t = t2;
+  }
+  return arc.len;
+}
+
 function draw(el: HTMLCanvasElement | null, segments: Segment[], t: number, v: number, labels: string[]) {
   if (!el) return;
   const dpr = window.devicePixelRatio || 1;
@@ -197,14 +214,16 @@ function draw(el: HTMLCanvasElement | null, segments: Segment[], t: number, v: n
   ctx.setLineDash([]);
   ctx.globalCompositeOperation = 'source-over';
 
-  // Upcoming target (faint dashed guide to the right).
+  // Upcoming path to the right, dashed. The dash pattern is anchored to the path itself (offset by the
+  // distance already travelled), so the dashes scroll left with the curve and the circle runs along them.
   ctx.strokeStyle = 'rgba(255,255,255,.28)'; ctx.lineWidth = 2; ctx.setLineDash([4, 6]);
+  ctx.lineDashOffset = travelled(segments, t, pps, ph) % 10;
   ctx.beginPath();
-  for (let x = cx; x <= w - R; x += 3) {
+  for (let x = cx; x <= w - R; x += 2) {
     const val = tensionAt(segments, t + (x - cx) / pps);
     if (x === cx) ctx.moveTo(x, y(val)); else ctx.lineTo(x, y(val));
   }
-  ctx.stroke(); ctx.setLineDash([]);
+  ctx.stroke(); ctx.setLineDash([]); ctx.lineDashOffset = 0;
 
   // The circle.
   const cy = y(v);
