@@ -44,6 +44,19 @@ export function rgbOf(name: string): number[] {
 export const cssColor = (name: string) => `rgb(${rgbOf(name).join(',')})`;
 export const refreshPalette = () => { cache = {}; };
 
+const AURORA: Record<string, string> = { '--bg': '#0b0d1a', '--card': '#161a2e', '--text': '#eef0fb', '--p1': '#36c6ff', '--p2': '#8b5cf6', '--p3': '#ff4f9a', '--p6': '#2ee6b0' };
+/** Colours used to draw a theme's preview swatch, independent of the active theme. */
+export const previewOf = (t: Theme) => ({ ...AURORA, ...t.vars });
+
+const KEY = 'theme';
+export function savedTheme(): string {
+  try { return localStorage.getItem(KEY) ?? 'aurora'; } catch { return 'aurora'; }
+}
+export function setTheme(id: string) {
+  try { localStorage.setItem(KEY, id); } catch { /* private mode: applies for this session only */ }
+  applyTheme(id);
+}
+
 export function applyTheme(id: string) {
   const t = THEMES.find((x) => x.id === id) ?? THEMES[0];
   const root = document.documentElement;

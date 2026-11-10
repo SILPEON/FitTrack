@@ -12,7 +12,7 @@ import { recorder } from './recorder';
 import { CalendarDays, Dumbbell, Flame, Map as MapIcon, UserRound, type LucideIcon } from 'lucide-preact';
 import { GradientDefs, Ico } from './icons';
 import { RestBar } from './RestBar';
-import { applyTheme } from './theme';
+import { applyTheme, savedTheme } from './theme';
 
 type TabKey = 'history' | 'routes' | 'training' | 'metabolism' | 'profile';
 
@@ -51,7 +51,7 @@ function App() {
   );
 }
 
-applyTheme((() => { try { return localStorage.getItem('theme') ?? 'aurora'; } catch { return 'aurora'; } })());
+applyTheme(savedTheme());
 render(<App />, document.getElementById('app')!);
 
 // Ask the browser not to evict our data under storage pressure.

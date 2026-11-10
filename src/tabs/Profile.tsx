@@ -2,8 +2,9 @@ import { useEffect, useRef, useState } from 'preact/hooks';
 import { db, exportBackup, getProfile, importBackup, saveProfile, DEFAULT_PROFILE, type Profile, type WeightEntry } from '../db';
 import { ACTIVITY_LEVELS, age, bmi, bmiCategory, dayKey, fmt, fmtDate, healthyRange, shareFile, targets } from '../calc';
 import { ActionRow, NumberInput, Page, Row, Section, Segmented, useLive } from '../ui';
-import { Download, Minus, Plus, TriangleExclamationPoint, Upload } from 'lucide-preact';
+import { Check, Download, Minus, Plus, TriangleExclamationPoint, Upload } from 'lucide-preact';
 import { Ico } from '../icons';
+import { THEMES, previewOf, savedTheme, setTheme } from '../theme';
 
 export function ProfileHome() {
   const stored = useLive(() => getProfile(), [], null as Profile | null);
@@ -124,6 +125,8 @@ export function ProfileHome() {
         </div>
       </Section>
 
+      <ThemeSection />
+
       <BackupSection />
     </Page>
   );
@@ -142,6 +145,33 @@ function Stepper({ label, value, step, min, max, display, onChange }: {
         <button onClick={() => onChange(clamp(value + step))} disabled={value >= max} aria-label="Increase"><Ico icon={Plus} size={18} /></button>
       </span>
     </Row>
+  );
+}
+
+function ThemeSection() {
+  const [current, setCurrent] = useState(savedTheme);
+  const pick = (id: string) => { setTheme(id); setCurrent(id); };
+  const active = THEMES.find((t) => t.id === current) ?? THEMES[0];
+  return (
+    <Section title="Colour design" footer={active.vibe}>
+      <div class="theme-grid pad">
+        {THEMES.map((t) => {
+          const c = previewOf(t);
+          const on = t.id === active.id;
+          return (
+            <button class={`theme-card ${on ? 'on' : ''}`} aria-pressed={on} onClick={() => pick(t.id)}
+              style={{ background: c['--bg'], color: c['--text'], borderColor: on ? c['--p2'] : 'transparent' }}>
+              <span class="theme-mini" style={{ background: c['--card'] }}>
+                <i style={{ background: `linear-gradient(120deg, ${c['--p1']}, ${c['--p2']} 52%, ${c['--p3']})` }} />
+                <i class="short" style={{ background: c['--p6'] }} />
+              </span>
+              <span class="theme-name">{t.name}</span>
+              {on && <span class="theme-check" style={{ background: c['--p2'] }}><Ico icon={Check} size={13} strokeWidth={3} /></span>}
+            </button>
+          );
+        })}
+      </div>
+    </Section>
   );
 }
 

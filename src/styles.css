@@ -514,3 +514,12 @@ select { border: 0; background: var(--fill); border-radius: 9px; padding: 6px 10
 .kegel-player .player-top { justify-content: space-between; }
 .kegel-player .player-controls { padding-top: 10px; }
 .amount-hint { padding: 2px 16px 6px; }
+
+/* Colour design picker (Profile) */
+.theme-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.theme-card { position: relative; display: flex; flex-direction: column; gap: 8px; padding: 10px; border-radius: 14px; border: 2px solid transparent; text-align: left; }
+.theme-mini { display: flex; flex-direction: column; gap: 5px; padding: 8px; border-radius: 9px; }
+.theme-mini i { display: block; height: 7px; border-radius: 4px; }
+.theme-mini i.short { width: 45%; }
+.theme-name { font-size: 13px; font-weight: 650; }
+.theme-check { position: absolute; top: 6px; right: 6px; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; }
