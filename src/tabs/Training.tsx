@@ -191,7 +191,10 @@ export function WorkoutScreen({ id }: { id: number }) {
                 <span class={`ex-badge ${entry.done ? 'done' : ''}`}>{entry.done ? <Ico icon={Check} size={16} /> : ei + 1}</span>
                 <div class="row-main">
                   <b class="ex-name">{ex?.name ?? 'Deleted exercise'}{entry.userNote?.trim() && <Ico icon={NotebookPen} size={14} class="ex-note-mark" />}</b>
-                  <div class="sub small">{entry.target ? `${entry.target} · ` : ''}{tag.text}{bench ? ` · ${bench}` : ''}</div>
+                  {isOpen && lib && (
+                    <button class="pill tappable-pill howto-pill" aria-expanded={cueFor === ei}
+                      onClick={(e) => { e.stopPropagation(); setCueFor(cueFor === ei ? null : ei); }}><Ico icon={Info} size={13} />How to</button>
+                  )}
                 </div>
                 <span class="ex-progress">{doneSets}/{entry.sets.length}</span>
                 <button class="icon-link" aria-label="Exercise options" onClick={(e) => { e.stopPropagation(); setMenuIndex(ei); }}><Ico icon={Ellipsis} size={20} /></button>
@@ -203,9 +206,6 @@ export function WorkoutScreen({ id }: { id: number }) {
                   <div class="target-line">
                     <span class="pill equip-pill"><Ico icon={tag.bodyweight ? PersonStanding : Dumbbell} size={13} />{tag.text}</span>
                     {bench && <span class="pill equip-pill"><Ico icon={Angle} size={13} />{bench}</span>}
-                    {entry.target && <span class="pill"><Ico icon={ClipboardList} size={13} />{entry.target}</span>}
-                    <span class="pill"><Ico icon={Timer} size={13} />rest {fmtRest(entry.rest ?? DEFAULT_REST)}</span>
-                    {lib && <button class="pill tappable-pill" onClick={() => setCueFor(cueFor === ei ? null : ei)}><Ico icon={Info} size={13} />How to</button>}
                     <button class={`pill tappable-pill ${entry.userNote?.trim() ? 'has-note' : ''}`} aria-expanded={noteFor === ei || !!entry.userNote}
                       onClick={() => setNoteFor(noteFor === ei ? null : ei)}><Ico icon={NotebookPen} size={13} />Notes</button>
                   </div>
@@ -312,7 +312,6 @@ export function WorkoutScreen({ id }: { id: number }) {
   );
 }
 
-const fmtRest = (s: number) => (s >= 60 ? `${fmt(s / 60, 1)} min` : `${s} s`);
 
 /** End-of-workout summary: time, sets, volume, personal records, muscles trained. */
 function WorkoutSummary({ workout, all, exMap, onClose, onBack }: {

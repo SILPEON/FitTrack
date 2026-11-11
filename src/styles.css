@@ -532,3 +532,4 @@ select { border: 0; background: var(--fill); border-radius: 9px; padding: 6px 10
 .hint.prev-note .ico { margin-top: 2px; color: var(--accent); }
 .note-item .note-text { white-space: pre-wrap; margin-top: 3px; line-height: 1.4; }
 .note-group { background: color-mix(in srgb, var(--fill) 45%, transparent); }
+.howto-pill { margin-top: 5px; }
