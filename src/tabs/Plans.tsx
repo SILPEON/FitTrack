@@ -3,7 +3,7 @@ import { CalendarDays, ChevronDown, ChevronUp, ClipboardList, Dumbbell, Info, Pl
 import { db, type Exercise, type SetEntry, type Workout, type WorkoutEntry } from '../db';
 import { BodyMap, IntensityLegend } from '../bodymap';
 import { fmt } from '../calc';
-import { DEFAULT_GEAR, EX, LIBRARY, PLANS, PLATES, PRINCIPLES, PRIORITY, SETUP, defaultLoad, weeklyVolume, type Gear, type Muscle, type Plan, type PlanDay } from '../plans';
+import { DEFAULT_GEAR, EX, benchAngle, LIBRARY, PLANS, PLATES, PRINCIPLES, PRIORITY, SETUP, defaultLoad, weeklyVolume, type Gear, type Muscle, type Plan, type PlanDay } from '../plans';
 import { Ico } from '../icons';
 import { ActionRow, Bar, NumberInput, Page, Row, Section, useLive, useNav } from '../ui';
 
@@ -286,6 +286,7 @@ function DayScreen({ plan, day }: { plan: Plan; day: PlanDay }) {
                 <div class="sub small">
                   {it.sets} × {it.reps}{ex.perSide ? ' / side' : ''} · rest {it.rest >= 60 ? `${fmt(it.rest / 60, 1)} min` : `${it.rest} s`}
                   {load > 0 ? ` · ${fmt(load)} kg` : ''}
+                  {benchAngle(it.name) ? ` · ${benchAngle(it.name)}` : ''}
                 </div>
                 {it.note && <div class="small accent">{it.note}</div>}
                 {open === k && (

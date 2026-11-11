@@ -9,8 +9,8 @@ import { BodyMap, IntensityLegend } from '../bodymap';
 import { KegelCard } from './Kegel';
 import { YogaCard } from './Yoga';
 import { BreathingCard } from './Breathing';
-import { DEFAULT_GEAR, LIBRARY, type Muscle } from '../plans';
-import { Check, NotebookPen, PenLine, ChevronDown, ChevronUp, CircleCheck, ClipboardList, Info, Medal, PersonStanding, Timer, Trophy } from 'lucide-preact';
+import { DEFAULT_GEAR, LIBRARY, benchAngle, type Muscle } from '../plans';
+import { Angle, Check, NotebookPen, PenLine, ChevronDown, ChevronUp, CircleCheck, ClipboardList, Info, Medal, PersonStanding, Timer, Trophy } from 'lucide-preact';
 import { restTimer } from '../restTimer';
 
 export const useExerciseMap = () => {
@@ -182,6 +182,7 @@ export function WorkoutScreen({ id }: { id: number }) {
         const prev = previousEntry(all, entry.exerciseId, workout.date, id);
         const isOpen = current === ei;
         const doneSets = entry.sets.filter((x) => x.done).length;
+        const bench = ex ? benchAngle(ex.name) : undefined;
         const kgPlaceholder = tag.bodyweight ? 'bodyweight' : tag.band ? 'band' : '0';
         return (
           <section class="section" id={`ex-${id}-${ei}`} key={ei}>
@@ -190,7 +191,7 @@ export function WorkoutScreen({ id }: { id: number }) {
                 <span class={`ex-badge ${entry.done ? 'done' : ''}`}>{entry.done ? <Ico icon={Check} size={16} /> : ei + 1}</span>
                 <div class="row-main">
                   <b class="ex-name">{ex?.name ?? 'Deleted exercise'}{entry.userNote?.trim() && <Ico icon={NotebookPen} size={14} class="ex-note-mark" />}</b>
-                  <div class="sub small">{entry.target ? `${entry.target} · ` : ''}{tag.text}</div>
+                  <div class="sub small">{entry.target ? `${entry.target} · ` : ''}{tag.text}{bench ? ` · ${bench}` : ''}</div>
                 </div>
                 <span class="ex-progress">{doneSets}/{entry.sets.length}</span>
                 <button class="icon-link" aria-label="Exercise options" onClick={(e) => { e.stopPropagation(); setMenuIndex(ei); }}><Ico icon={Ellipsis} size={20} /></button>
@@ -201,6 +202,7 @@ export function WorkoutScreen({ id }: { id: number }) {
                 <div class="ex-body">
                   <div class="target-line">
                     <span class="pill equip-pill"><Ico icon={tag.bodyweight ? PersonStanding : Dumbbell} size={13} />{tag.text}</span>
+                    {bench && <span class="pill equip-pill"><Ico icon={Angle} size={13} />{bench}</span>}
                     {entry.target && <span class="pill"><Ico icon={ClipboardList} size={13} />{entry.target}</span>}
                     <span class="pill"><Ico icon={Timer} size={13} />rest {fmtRest(entry.rest ?? DEFAULT_REST)}</span>
                     {lib && <button class="pill tappable-pill" onClick={() => setCueFor(cueFor === ei ? null : ei)}><Ico icon={Info} size={13} />How to</button>}

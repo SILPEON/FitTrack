@@ -318,6 +318,31 @@ export const SETUP = {
   dbText: 'Each end: 2 + 1 + 1 (+8 kg per dumbbell)',
 };
 
+/**
+ * Back-rest angle of the adjustable bench for each exercise that uses it (0° = flat, 90° = upright).
+ * If your bench has no notch at exactly this angle, use the nearest lower one.
+ */
+const BENCH: Record<string, number | 'decline'> = {
+  'Barbell Hip Thrust': 0, 'B-Stance Hip Thrust (Barbell)': 0, 'Single-Leg Hip Thrust': 0,
+  'Bulgarian Split Squat – Quad Focus': 0, 'Bulgarian Split Squat – Glute Focus': 0, 'Dumbbell Step-Up': 0,
+  'Banded Lying Leg Curl': 0, 'Incline Dumbbell Press (20°)': 20, 'Flat Dumbbell Press (Neutral Grip)': 0, 'Dumbbell Fly (Short Range)': 0,
+  'Prone Y-Raise (40° Incline)': 40, 'Lying Neck Flexion': 0, 'Lying Neck Extension': 0, 'Incline Dumbbell Curl (60°)': 60,
+  'Lying Dumbbell Triceps Extension': 0, 'One-Arm Dumbbell Row': 0, 'Chest-Supported Dumbbell Row (40°)': 40,
+  // General exercise library
+  'Barbell Bench Press': 0, 'Incline Barbell Bench Press': 30, 'Decline Bench Press': 'decline', 'Dumbbell Bench Press': 0,
+  'Incline Dumbbell Press': 30, 'Dumbbell Fly': 0, 'Close-Grip Bench Press': 0, 'Seated Dumbbell Shoulder Press': 90,
+  'Incline Dumbbell Curl': 60, 'Concentration Curl': 0, 'Skull Crusher': 0, 'Triceps Dip': 0,
+  'Bulgarian Split Squat': 0, 'Step-Up': 0,
+};
+
+/** Short label for the bench setting, e.g. "Bench 40°" or "Bench flat 0°"; undefined if no bench is used. */
+export function benchAngle(name: string): string | undefined {
+  const a = BENCH[name];
+  if (a === undefined) return undefined;
+  if (a === 'decline') return 'Bench decline';
+  return a === 0 ? 'Bench flat 0°' : a === 90 ? 'Bench upright 90°' : `Bench ${a}°`;
+}
+
 export interface Gear { barKg: number; handleKg: number }
 export const DEFAULT_GEAR: Gear = { barKg: 10, handleKg: 2 };
 
