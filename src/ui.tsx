@@ -3,7 +3,7 @@ import { createPortal } from 'preact/compat';
 import { useContext, useEffect, useRef, useState } from 'preact/hooks';
 import { liveQuery } from 'dexie';
 import { fmt, parseNum } from './calc';
-import { ChevronLeft, ChevronRight, type LucideIcon } from 'lucide-preact';
+import { ChevronLeft, ChevronRight, CircleCheck, Play, type LucideIcon } from 'lucide-preact';
 import { Ico, type Grad } from './icons';
 
 /** Number for an editable field: locale decimal separator, no thousands grouping. */
@@ -65,11 +65,17 @@ export function Page({ title, actions, left, children, noScroll }: {
 
 // ---------- Layout primitives ----------
 
-export const Section = ({ title, right, footer, children }: {
+export const Section = ({ title, right, footer, children, icon, strong }: {
   title?: ComponentChildren; right?: ComponentChildren; footer?: ComponentChildren; children: ComponentChildren;
+  /** Panel style: bold white header with an icon next to it. */
+  icon?: LucideIcon; strong?: boolean;
 }) => (
   <section class="section">
-    {(title || right) && <div class="section-head"><span>{title}</span><span>{right}</span></div>}
+    {(title || right) && (
+      <div class={`section-head ${strong ? 'strong' : ''}`}>
+        <span class="section-title">{icon && <Ico icon={icon} size={18} grad="main" />}{title}</span><span>{right}</span>
+      </div>
+    )}
     <div class="card">{children}</div>
     {footer && <div class="section-foot">{footer}</div>}
   </section>
@@ -165,6 +171,29 @@ export function NumberInput({ value, onChange, placeholder, decimals = true, cla
  * content area: iOS Safari confines position:fixed children of scroll containers to that area.
  */
 export const Overlay = ({ children }: { children: ComponentChildren }) => createPortal(<>{children}</>, document.body);
+
+/** A startable session in a Training panel: name and detail on the left, play button with duration on the right. */
+export function SessionRow({ title, sub, minutes, done, onPlay, onOpen, extra }: {
+  title: ComponentChildren; sub?: ComponentChildren; minutes: number; done?: boolean;
+  onPlay: () => void; /** Tapping the text opens details instead of playing. */ onOpen?: () => void; extra?: ComponentChildren;
+}) {
+  const play = (
+    <span class="session-play">
+      <Ico icon={done ? CircleCheck : Play} size={24} grad={done ? 'fresh' : 'main'} />
+      <span class="session-min">{minutes} min</span>
+    </span>
+  );
+  return (
+    <div class="row session-row">
+      <button class="session-text" onClick={onOpen ?? onPlay}>
+        <span class="session-title">{title}</span>
+        {sub && <span class="sub small">{sub}</span>}
+      </button>
+      {extra}
+      <button class="session-btn" aria-label={done ? 'Done today, play again' : 'Start'} onClick={onPlay}>{play}</button>
+    </div>
+  );
+}
 
 // ---------- Sheets (modals) ----------
 

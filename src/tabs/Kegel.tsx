@@ -1,11 +1,11 @@
 import { useState } from 'preact/hooks';
-import { ChevronDown, ChevronUp, HeartPulse, Play } from 'lucide-preact';
+import { Activity, ChevronDown, ChevronUp, Play } from 'lucide-preact';
 import { db } from '../db';
 import { TrackPlayer } from '../track';
 import { dayKey, fmtDate, fmtDuration } from '../calc';
 import { DEFAULT_KEGEL, KEGEL_GUIDE, LEVELS, SESSIONS_PER_DAY, SESSIONS_TO_ADVANCE, buildSession, type KegelState, type Level } from '../kegel';
 import { Ico } from '../icons';
-import { ActionRow, Page, Row, Section, useLive, useNav } from '../ui';
+import { ActionRow, Page, Row, Section, SessionRow, useLive, useNav } from '../ui';
 
 export const getKegel = async (): Promise<KegelState> => ({ ...DEFAULT_KEGEL, ...((await db.kv.get('kegel'))?.value as Partial<KegelState> ?? {}) });
 const saveKegel = (s: KegelState) => db.kv.put({ key: 'kegel', value: s });
@@ -16,21 +16,34 @@ const minutes = (lv: Level) => Math.round(buildSession(lv).total / 60);
 export function KegelCard() {
   const nav = useNav();
   const st = useLive(() => getKegel(), [], DEFAULT_KEGEL);
+  const [playing, setPlaying] = useState<Level | null>(null);
   const lv = LEVELS[st.level - 1];
   const today = st.log.filter((l) => l.day === dayKey()).length;
   return (
-    <Section title="Pelvic floor">
-      <Row chevron onClick={() => nav.push(<KegelScreen />)}>
-        <span class="icon-badge violet"><Ico icon={HeartPulse} size={18} /></span>
-        <div class="row-main">
-          <b>Kegel trainer</b>
-          <div class="sub small">Level {lv.level} · {lv.name} · {minutes(lv)} min</div>
-        </div>
-        <span class="kegel-dots" aria-label={`${today} of ${SESSIONS_PER_DAY} sessions today`}>
-          {Array.from({ length: SESSIONS_PER_DAY }, (_, i) => <i class={i < today ? 'on' : ''} />)}
-        </span>
-      </Row>
+    <Section title="Kegels" icon={Activity} strong
+      right={<button class="link small-link" onClick={() => nav.push(<KegelScreen />)}>Trainer</button>}>
+      <SessionRow title="Kegel trainer" sub={`Level ${lv.level} · ${lv.name}`} minutes={minutes(lv)}
+        done={today >= SESSIONS_PER_DAY} onOpen={() => nav.push(<KegelScreen />)} onPlay={() => setPlaying(lv)}
+        extra={(
+          <span class="kegel-count" aria-label={`${today} of ${SESSIONS_PER_DAY} sessions today`}>
+            <span class="kegel-dots big">{Array.from({ length: SESSIONS_PER_DAY }, (_, i) => <i class={i < today ? 'on' : ''} />)}</span>
+            <span class="kegel-count-text">{Math.min(today, SESSIONS_PER_DAY)}/{SESSIONS_PER_DAY} today</span>
+          </span>
+        )} />
+      {playing && <KegelPlayer level={playing} onClose={() => setPlaying(null)} />}
     </Section>
+  );
+}
+
+/** Runs one Kegel session and logs it when finished. */
+function KegelPlayer({ level, onClose }: { level: Level; onClose: () => void }) {
+  return (
+    <TrackPlayer {...buildSession(level)}
+      doneText={`Level ${level.level}. Remember: relaxed, normal breathing for the rest of the day.`}
+      muteKey="kegelMuted" onClose={onClose} onDone={async (secs) => {
+        const s = await getKegel();
+        await saveKegel({ ...s, atLevel: s.atLevel + 1, log: [...s.log, { day: dayKey(), level: level.level, secs }].slice(-400) });
+      }} />
   );
 }
 
@@ -104,12 +117,7 @@ function KegelScreen() {
         </Section>
       )}
 
-      {playing && <TrackPlayer {...buildSession(playing)}
-        doneText={`Level ${playing.level}. Remember: relaxed, normal breathing for the rest of the day.`}
-        muteKey="kegelMuted" onClose={() => setPlaying(null)} onDone={async (secs) => {
-        const s = await getKegel();
-        await saveKegel({ ...s, atLevel: s.atLevel + 1, log: [...s.log, { day: dayKey(), level: playing.level, secs }].slice(-400) });
-      }} />}
+      {playing && <KegelPlayer level={playing} onClose={() => setPlaying(null)} />}
     </Page>
   );
 }

@@ -533,3 +533,18 @@ select { border: 0; background: var(--fill); border-radius: 9px; padding: 6px 10
 .note-item .note-text { white-space: pre-wrap; margin-top: 3px; line-height: 1.4; }
 .note-group { background: color-mix(in srgb, var(--fill) 45%, transparent); }
 .howto-pill { margin-top: 5px; }
+
+/* Training panels: bold white header with icon, sessions with play + duration on the right */
+.section-title { display: inline-flex; align-items: center; gap: 7px; }
+.section-head.strong { color: var(--text); font-size: 15px; font-weight: 800; letter-spacing: .6px; }
+.section-head.strong .small-link { font-weight: 500; letter-spacing: 0; }
+.session-row { padding-top: 0; padding-bottom: 0; gap: 10px; }
+.session-text { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding: 11px 0; text-align: left; }
+.session-title { color: color-mix(in srgb, var(--text) 72%, var(--sub)); font-weight: 600; }
+.session-btn { flex-shrink: 0; align-self: stretch; display: flex; align-items: center; padding: 6px 2px 6px 8px; }
+.session-play { display: flex; flex-direction: column; align-items: center; gap: 2px; min-width: 44px; }
+.session-min { font-size: 11.5px; color: var(--sub); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.kegel-count { display: flex; flex-direction: column; align-items: center; gap: 4px; flex-shrink: 0; }
+.kegel-dots.big { gap: 7px; }
+.kegel-dots.big i { width: 15px; height: 15px; }
+.kegel-count-text { font-size: 11.5px; color: var(--sub); font-variant-numeric: tabular-nums; }

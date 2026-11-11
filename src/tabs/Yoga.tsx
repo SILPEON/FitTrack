@@ -5,7 +5,7 @@ import { db, type MobilityTest, type YogaSession } from '../db';
 import { dayKey, fmt, fmtDate, fmtDuration } from '../calc';
 import { PROGRAM, ROUTINES, SWITCH_SECS, TRANSITION_SECS, routineSecs, type Routine } from '../yoga';
 import { Ico } from '../icons';
-import { ActionRow, Empty, LineChart, NumberInput, Page, Row, Section, Segmented, Sheet, useLive, useNav, Overlay } from '../ui';
+import { ActionRow, SessionRow, Empty, LineChart, NumberInput, Page, Row, Section, Segmented, Sheet, useLive, useNav, Overlay } from '../ui';
 
 const KIND_ICON: Record<Routine['kind'], LucideIcon> = { Yoga: Flower2, Pilates: Sparkles, Mobility: Leaf, Recovery: Wind };
 const routineIcon = (r: Routine) => (r.id === 'wind-down' ? Moon : KIND_ICON[r.kind]);
@@ -38,17 +38,13 @@ export function YogaCard() {
   const ids = active ? PROGRAM.schedule[(new Date().getDay() + 6) % 7] : ['legs-daily', 'hamstrings'];
   const done = new Set(sessions.map((s) => s.routineId));
   return (
-    <Section title={active ? `Yoga & mobility · week ${program.week} of 4` : 'Yoga & mobility'}
+    <Section title="Pilates" icon={Flower2} strong
       right={<button class="link small-link" onClick={() => nav.push(<YogaHome />)}>All routines</button>}>
       {ids.map((id) => {
         const r = byId(id);
-        const isDone = done.has(id);
         return (
-          <Row key={id} onClick={() => setPlaying(r)}>
-            <span class={`icon-badge ${isDone ? 'done' : 'violet'}`}><Ico icon={isDone ? CircleCheck : routineIcon(r)} size={18} /></span>
-            <div class="row-main"><b>{r.name}</b><div class="sub small">{isDone ? 'Done today' : `${Math.round(routineSecs(r, scale) / 60)} min · ${r.kind}`}</div></div>
-            <Ico icon={Play} size={20} grad="main" />
-          </Row>
+          <SessionRow key={id} title={r.name} done={done.has(id)} minutes={Math.round(routineSecs(r, scale) / 60)}
+            sub={done.has(id) ? 'Done today' : `${r.kind}${active ? ` · week ${program.week} of 4` : ''}`} onPlay={() => setPlaying(r)} />
         );
       })}
       {!active && <ActionRow icon={CalendarCheck} label="Start the mobility & splits program" onClick={() => db.kv.put({ key: 'yogaProgramStart', value: today })} />}

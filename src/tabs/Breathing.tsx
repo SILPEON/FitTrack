@@ -5,7 +5,7 @@ import { dayKey, fmtDate, fmtDuration } from '../calc';
 import { BREATH_CAUTION, BREATHING, buildBreathSession, type BreathState, type Breathing } from '../breathing';
 import { TrackPlayer } from '../track';
 import { Ico } from '../icons';
-import { Page, Row, Section, Segmented, useLive, useNav } from '../ui';
+import { Page, Row, Section, SessionRow, Segmented, useLive, useNav } from '../ui';
 
 export const getBreathing = async (): Promise<BreathState> => ({ log: [], ...((await db.kv.get('breathing'))?.value as Partial<BreathState> ?? {}) });
 
@@ -34,13 +34,10 @@ export function BreathingCard() {
   const done = new Set(st.log.filter((l) => l.day === dayKey()).map((l) => l.id));
   const quick = BREATHING.filter((b) => ['cyclic-sigh', 'resonance', 'complete-exhale'].includes(b.id));
   return (
-    <Section title="Breathing" right={<button class="link small-link" onClick={() => nav.push(<BreathingScreen />)}>All exercises</button>}>
+    <Section title="Breathing" icon={Wind} strong right={<button class="link small-link" onClick={() => nav.push(<BreathingScreen />)}>All exercises</button>}>
       {quick.map((b) => (
-        <Row key={b.id} onClick={() => setPlaying(b)}>
-          <span class={`icon-badge ${done.has(b.id) ? 'done' : 'breath'}`}><Ico icon={Wind} size={18} /></span>
-          <div class="row-main"><b>{b.name}</b><div class="sub small">{b.bestFor} · {b.defaultMin} min</div></div>
-          <Ico icon={Play} size={20} grad="main" />
-        </Row>
+        <SessionRow key={b.id} title={b.name} sub={done.has(b.id) ? 'Done today' : b.bestFor} done={done.has(b.id)}
+          minutes={b.defaultMin} onPlay={() => setPlaying(b)} />
       ))}
       {playing && <BreathPlayer ex={playing} minutes={playing.defaultMin} onClose={() => setPlaying(null)} />}
     </Section>
