@@ -11,6 +11,8 @@ export interface WorkoutEntry {
   exerciseId: number; sets: SetEntry[];
   /** Set when the workout was started from a plan. */
   target?: string; rest?: number; note?: string; done?: boolean;
+  /** Your own note for this exercise in this workout (note above is the plan's coaching hint). */
+  userNote?: string;
 }
 export interface Workout { id: number; date: number; title: string; notes: string; entries: WorkoutEntry[]; planId?: string; dayId?: string; finishedAt?: number }
 export interface WeightEntry { id: number; day: string; kg: number }

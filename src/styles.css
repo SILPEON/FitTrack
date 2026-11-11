@@ -523,3 +523,12 @@ select { border: 0; background: var(--fill); border-radius: 9px; padding: 6px 10
 .theme-mini i.short { width: 45%; }
 .theme-name { font-size: 13px; font-weight: 650; }
 .theme-check { position: absolute; top: 6px; right: 6px; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; }
+
+/* Exercise notes */
+.ex-note { margin: 4px 16px 6px; width: calc(100% - 32px); background: var(--fill); border-radius: 10px; padding: 10px 12px; font-size: 15px; }
+.ex-note-mark { display: inline-block; vertical-align: -2px; margin-left: 6px; color: var(--accent); }
+.tappable-pill.has-note { background: color-mix(in srgb, var(--p2) 22%, var(--fill)); color: var(--text); }
+.hint.prev-note { display: flex; gap: 6px; align-items: flex-start; color: var(--text); }
+.hint.prev-note .ico { margin-top: 2px; color: var(--accent); }
+.note-item .note-text { white-space: pre-wrap; margin-top: 3px; line-height: 1.4; }
+.note-group { background: color-mix(in srgb, var(--fill) 45%, transparent); }

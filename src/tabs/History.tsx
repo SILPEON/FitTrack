@@ -1,11 +1,12 @@
 import { useState } from 'preact/hooks';
-import { ChevronLeft, ChevronRight, Dumbbell, Ellipsis, Flower2, HeartPulse, Route as RouteIcon, Wind, type LucideIcon } from 'lucide-preact';
-import { db, type Route, type Workout, type YogaSession } from '../db';
+import { NotebookPen } from 'lucide-preact';
+import { ChevronDown, ChevronLeft, ChevronRight, ChevronUp, Dumbbell, Ellipsis, Flower2, HeartPulse, Route as RouteIcon, Wind, type LucideIcon } from 'lucide-preact';
+import { db, MUSCLES, type Route, type Workout, type YogaSession } from '../db';
 import { activityInfo, dayKey, fmt, fmtDistance, fmtDuration } from '../calc';
 import { ROUTINES } from '../yoga';
 import { Ico } from '../icons';
-import { ActionSheet, Empty, Page, Row, Section, useLive, useNav } from '../ui';
-import { WorkoutScreen, isInProgress, repeatWorkout, setCount, volume } from './Training';
+import { ActionSheet, Empty, Page, Row, Section, Segmented, useLive, useNav } from '../ui';
+import { WorkoutScreen, isInProgress, useExerciseMap, repeatWorkout, setCount, volume } from './Training';
 import { RouteDetail } from './Routes';
 import { getKegel } from './Kegel';
 import { getBreathing } from './Breathing';
@@ -130,6 +131,8 @@ export function HistoryHome() {
         </div>
       </div>
 
+      <NotesPanel />
+
       <Section title={new Date(selected + 'T12:00:00').toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' })}>
         {dayItems.length ? dayItems.map(row) : <Row><span class="sub">Rest day: nothing logged.</span></Row>}
       </Section>
@@ -145,6 +148,104 @@ export function HistoryHome() {
         { label: 'Repeat this workout today', run: async () => nav.push(<WorkoutScreen id={await repeatWorkout(menuFor)} />) },
         { label: 'Delete workout', destructive: true, run: () => { if (confirm('Delete this workout?')) db.workouts.delete(menuFor.id); } },
       ] : []} />
+    </Page>
+  );
+}
+
+// ---------- Notes ----------
+
+interface Note { key: string; workout: Workout; exercise?: string; muscle: string; text: string }
+const WHOLE = 'Whole workout';
+
+function useNotes(): Note[] {
+  const workouts = useLive(() => db.workouts.orderBy('date').reverse().toArray(), [], [] as Workout[]);
+  const exMap = useExerciseMap();
+  const notes: Note[] = [];
+  for (const w of workouts) {
+    w.entries.forEach((e, i) => {
+      const text = e.userNote?.trim();
+      if (!text) return;
+      const ex = exMap.get(e.exerciseId);
+      notes.push({ key: `${w.id}-${i}`, workout: w, exercise: ex?.name ?? 'Deleted exercise', muscle: ex?.muscle ?? 'Other', text });
+    });
+    if (w.notes?.trim()) notes.push({ key: `${w.id}-w`, workout: w, muscle: WHOLE, text: w.notes.trim() });
+  }
+  return notes;
+}
+
+/** Panel on the History home that opens all notes. */
+function NotesPanel() {
+  const nav = useNav();
+  const notes = useNotes();
+  const latest = notes[0];
+  return (
+    <Section>
+      <Row onClick={() => nav.push(<NotesScreen />)}>
+        <span class="icon-badge"><Ico icon={NotebookPen} size={18} /></span>
+        <div class="row-main">
+          <b>Workout notes</b>
+          <div class="sub small">{latest ? `${notes.length} ${notes.length === 1 ? 'note' : 'notes'} · latest: ${latest.exercise ?? WHOLE}` : 'Notes you add to exercises appear here'}</div>
+        </div>
+        <Ico icon={ChevronRight} size={18} class="chevron" />
+      </Row>
+    </Section>
+  );
+}
+
+function NotesScreen() {
+  const nav = useNav();
+  const notes = useNotes();
+  const [mode, setMode] = useState<'date' | 'muscle'>('date');
+  const [open, setOpen] = useState<Set<string>>(new Set());
+  const toggle = (m: string) => { const n = new Set(open); if (n.has(m)) n.delete(m); else n.add(m); setOpen(n); };
+
+  const item = (n: Note, showMuscle: boolean) => (
+    <Row key={n.key} onClick={() => nav.push(<WorkoutScreen id={n.workout.id} />)}>
+      <div class="row-main note-item">
+        <b>{n.exercise ?? WHOLE}</b>
+        <div class="sub small">{new Date(n.workout.date).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })} · {n.workout.title || 'Workout'}{showMuscle && n.exercise ? ` · ${n.muscle}` : ''}</div>
+        <div class="note-text">{n.text}</div>
+      </div>
+      <Ico icon={ChevronRight} size={18} class="chevron" />
+    </Row>
+  );
+
+  const order = [...MUSCLES, 'Other', WHOLE] as string[];
+  const groups = order.map((m) => ({ m, list: notes.filter((n) => n.muscle === m) })).filter((g) => g.list.length);
+  for (const n of notes) if (!order.includes(n.muscle) && !groups.some((g) => g.m === n.muscle)) groups.push({ m: n.muscle, list: notes.filter((x) => x.muscle === n.muscle) });
+
+  const months = new Map<string, Note[]>();
+  for (const n of notes) { const k = dayKey(new Date(n.workout.date)).slice(0, 7); months.set(k, [...(months.get(k) ?? []), n]); }
+
+  return (
+    <Page title="Workout notes">
+      {notes.length === 0 ? (
+        <Section><Empty icon={NotebookPen} title="No notes yet" text="During a workout, open an exercise and tap Notes to write down how it felt, technique cues or what to change next time." /></Section>
+      ) : (
+        <>
+          <div class="pad">
+            <Segmented value={mode} onChange={setMode} options={[{ key: 'date', label: 'By date' }, { key: 'muscle', label: 'By muscle group' }]} />
+          </div>
+          {mode === 'date' && [...months.entries()].map(([k, list]) => (
+            <Section key={k} title={new Date(k + '-15T12:00:00').toLocaleDateString(undefined, { month: 'long', year: 'numeric' })} right={`${list.length}`}>
+              {list.map((n) => item(n, true))}
+            </Section>
+          ))}
+          {mode === 'muscle' && (
+            <Section footer="Each exercise counts toward its main muscle group. Notes for the whole workout are collected at the end.">
+              {groups.map(({ m, list }) => (
+                <div key={m}>
+                  <button class="row tappable expand" aria-expanded={open.has(m)} onClick={() => toggle(m)}>
+                    <div class="row-main"><b>{m}</b><div class="sub small">{list.length} {list.length === 1 ? 'note' : 'notes'} · latest {new Date(list[0].workout.date).toLocaleDateString(undefined, { day: 'numeric', month: 'short' })}</div></div>
+                    <Ico icon={open.has(m) ? ChevronUp : ChevronDown} size={18} class="chevron" />
+                  </button>
+                  {open.has(m) && <div class="note-group">{list.map((n) => item(n, false))}</div>}
+                </div>
+              ))}
+            </Section>
+          )}
+        </>
+      )}
     </Page>
   );
 }

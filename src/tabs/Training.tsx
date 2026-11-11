@@ -10,10 +10,10 @@ import { KegelCard } from './Kegel';
 import { YogaCard } from './Yoga';
 import { BreathingCard } from './Breathing';
 import { DEFAULT_GEAR, LIBRARY, type Muscle } from '../plans';
-import { Check, PenLine, ChevronDown, ChevronUp, CircleCheck, ClipboardList, Info, Medal, PersonStanding, Timer, Trophy } from 'lucide-preact';
+import { Check, NotebookPen, PenLine, ChevronDown, ChevronUp, CircleCheck, ClipboardList, Info, Medal, PersonStanding, Timer, Trophy } from 'lucide-preact';
 import { restTimer } from '../restTimer';
 
-const useExerciseMap = () => {
+export const useExerciseMap = () => {
   const list = useLive(() => db.exercises.toArray(), [], [] as Exercise[]);
   return useMemo(() => new Map(list.map((e) => [e.id, e])), [list]);
 };
@@ -41,7 +41,7 @@ export const isInProgress = (w: Workout) => !w.finishedAt && Date.now() - w.date
 /** Creates a new workout from an earlier one (exercises and numbers, not the done marks). */
 export async function repeatWorkout(from?: Workout): Promise<number> {
   const entries: WorkoutEntry[] = from
-    ? from.entries.map((e) => ({ ...structuredClone(e), done: false, sets: e.sets.map((x) => ({ reps: x.reps, weight: x.weight, ...(x.side ? { side: x.side } : {}) })) }))
+    ? from.entries.map((e) => ({ ...structuredClone(e), done: false, userNote: undefined, sets: e.sets.map((x) => ({ reps: x.reps, weight: x.weight, ...(x.side ? { side: x.side } : {}) })) }))
     : [];
   return db.workouts.add({
     date: Date.now(), title: from?.title ?? 'Workout', notes: '', entries,
@@ -110,6 +110,7 @@ export function WorkoutScreen({ id }: { id: number }) {
   const [picker, setPicker] = useState(false);
   const [menuIndex, setMenuIndex] = useState<number | null>(null);
   const [cueFor, setCueFor] = useState<number | null>(null);
+  const [noteFor, setNoteFor] = useState<number | null>(null);
   /** undefined = automatic (first exercise not yet done), null = all folded. */
   const [openIdx, setOpenIdx] = useState<number | null | undefined>(undefined);
   const [showSummary, setSummary] = useState(false);
@@ -188,7 +189,7 @@ export function WorkoutScreen({ id }: { id: number }) {
               <div class="ex-head" role="button" tabIndex={0} aria-expanded={isOpen} onClick={() => setOpenIdx(isOpen ? null : ei)}>
                 <span class={`ex-badge ${entry.done ? 'done' : ''}`}>{entry.done ? <Ico icon={Check} size={16} /> : ei + 1}</span>
                 <div class="row-main">
-                  <b class="ex-name">{ex?.name ?? 'Deleted exercise'}</b>
+                  <b class="ex-name">{ex?.name ?? 'Deleted exercise'}{entry.userNote?.trim() && <Ico icon={NotebookPen} size={14} class="ex-note-mark" />}</b>
                   <div class="sub small">{entry.target ? `${entry.target} · ` : ''}{tag.text}</div>
                 </div>
                 <span class="ex-progress">{doneSets}/{entry.sets.length}</span>
@@ -203,10 +204,18 @@ export function WorkoutScreen({ id }: { id: number }) {
                     {entry.target && <span class="pill"><Ico icon={ClipboardList} size={13} />{entry.target}</span>}
                     <span class="pill"><Ico icon={Timer} size={13} />rest {fmtRest(entry.rest ?? DEFAULT_REST)}</span>
                     {lib && <button class="pill tappable-pill" onClick={() => setCueFor(cueFor === ei ? null : ei)}><Ico icon={Info} size={13} />How to</button>}
+                    <button class={`pill tappable-pill ${entry.userNote?.trim() ? 'has-note' : ''}`} aria-expanded={noteFor === ei || !!entry.userNote}
+                      onClick={() => setNoteFor(noteFor === ei ? null : ei)}><Ico icon={NotebookPen} size={13} />Notes</button>
                   </div>
+                  {(noteFor === ei || entry.userNote) && (
+                    <textarea class="textarea ex-note" rows={2} placeholder="e.g. felt it in the lower back, go lighter next time"
+                      value={entry.userNote ?? ''} autoFocus={noteFor === ei && !entry.userNote}
+                      onInput={(e) => { const v = (e.target as HTMLTextAreaElement).value; setNoteFor(ei); setEntries((en) => { en[ei].userNote = v || undefined; }); }} />
+                  )}
                   {entry.note && <div class="hint accent">{entry.note}</div>}
                   {cueFor === ei && lib && <div class="hint cue">{lib.cue}{lib.shoulder && <div class="warn">{lib.shoulder}</div>}</div>}
                   {prev && <div class="hint">Last time ({fmtDate(prev.w.date)}): {summary(prev.e)}</div>}
+                  {prev?.e.userNote?.trim() && <div class="hint prev-note"><Ico icon={NotebookPen} size={13} />Your note last time: {prev.e.userNote.trim()}</div>}
 
                   <div class="set-head"><span>Set</span><span>Reps</span><span /><span>kg</span><span>Rest</span><span /></div>
                   {entry.sets.map((st, si) => {
