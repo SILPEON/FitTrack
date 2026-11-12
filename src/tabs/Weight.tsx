@@ -29,11 +29,12 @@ export function WeightHome() {
   const log = showAll ? entries : entries.slice(0, LOG_PREVIEW);
 
   return (
-    <Page title="Weight" actions={<button class="icon-link" aria-label="Log weight" onClick={() => setAdding(true)}><Ico icon={Plus} size={26} grad="main" /></button>}>
+    <Page title="Weight">
       {entries.length === 0 ? (<>
         <Section>
-          <Empty icon={Scale} title="No weight logged" text="Tap + to add your first weigh-in. Your trend graph appears here." />
+          <Empty icon={Scale} title="No weight logged" text="Add your first weigh-in below. Your trend graph appears here." />
         </Section>
+        <div class="section"><button class="big-btn green full log-weight-btn" onClick={() => setAdding(true)}><Ico icon={Plus} size={20} />Log weight</button></div>
         <PhotosCard />
       </>) : (
         <>
@@ -72,6 +73,8 @@ export function WeightHome() {
               <b>{target != null ? `${target - latest.kg > 0 ? '+' : ''}${fmt(target - latest.kg)} kg` : entries.length}</b>
             </div>
           </div>
+
+          <div class="section"><button class="big-btn green full log-weight-btn" onClick={() => setAdding(true)}><Ico icon={Plus} size={20} />Log weight</button></div>
 
           <Section title="Details">
             <Row label="BMI category" value={bmiCategory(bmi(latest.kg, profile.heightCm))} />
