@@ -4,7 +4,7 @@ import { fmt, fmtDate, fmtDuration, oneRepMax, toLocalInput } from '../calc';
 import { ActionSheet, ActionRow, Empty, LineChart, NumberInput, Page, Row, Section, Sheet, useLive, useNav } from '../ui';
 import { BookOpen, Dumbbell, Ellipsis, Plus, SearchX, Trash, X } from 'lucide-preact';
 import { Ico } from '../icons';
-import { NextUpCard, PlansScreen, equipmentTag, getGear, normalise } from './Plans';
+import { CueSteps, NextUpCard, PlansScreen, equipmentTag, getGear, normalise } from './Plans';
 import { BodyMap, IntensityLegend } from '../bodymap';
 import { KegelCard } from './Kegel';
 import { YogaCard } from './Yoga';
@@ -215,7 +215,7 @@ export function WorkoutScreen({ id }: { id: number }) {
                       onInput={(e) => { const v = (e.target as HTMLTextAreaElement).value; setNoteFor(ei); setEntries((en) => { en[ei].userNote = v || undefined; }); }} />
                   )}
                   {entry.note && <div class="hint accent">{entry.note}</div>}
-                  {cueFor === ei && lib && <div class="hint cue">{lib.cue}{lib.shoulder && <div class="warn">{lib.shoulder}</div>}</div>}
+                  {cueFor === ei && lib && <div class="hint cue"><CueSteps cue={lib.cue} />{lib.shoulder && <div class="warn">{lib.shoulder}</div>}</div>}
                   {prev && <div class="hint">Last time ({fmtDate(prev.w.date)}): {summary(prev.e)}</div>}
                   {prev?.e.userNote?.trim() && <div class="hint prev-note"><Ico icon={NotebookPen} size={13} />Your note last time: {prev.e.userNote.trim()}</div>}
 

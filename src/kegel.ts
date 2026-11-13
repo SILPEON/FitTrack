@@ -3,7 +3,8 @@
  *
  * Structure follows common evidence-based PFMT protocols:
  *  - slow, sustained contractions (endurance) + quick contractions (fast-twitch / reflex)
- *  - full relaxation for at least as long as each contraction (prevents an over-tight pelvic floor)
+ *  - full relaxation for as long as each contraction (1:1): short breaks, but never shorter than the squeeze,
+ *    which prevents an over-tight pelvic floor
  *  - progression: longer holds, more repetitions, higher effort, harder positions
  *    (lying → sitting → standing), then combined and functional contractions
  *  - about 3 short sessions per day; noticeable results usually after 6–12 weeks
@@ -28,23 +29,23 @@ export interface Level {
 
 export const LEVELS: Level[] = [
   { level: 1, name: 'Foundation', position: 'Lying on your back, knees bent', weeks: 'Week 1–2',
-    slow: { reps: 8, hold: 3, effort: 0.7, rest: 6 }, quick: { reps: 8, on: 1, off: 2 }, elevator: 0, combo: 0,
-    focus: 'Find the right muscles and learn to relax them fully between contractions.' },
+    slow: { reps: 6, hold: 3, effort: 0.75, rest: 3 }, quick: { reps: 10, on: 0.8, off: 1 }, elevator: 0, combo: 0,
+    focus: 'Find the right muscles and let go completely after every squeeze, even when the break is short.' },
   { level: 2, name: 'Building', position: 'Lying or sitting', weeks: 'Week 3–4',
-    slow: { reps: 10, hold: 5, effort: 0.8, rest: 8 }, quick: { reps: 10, on: 1, off: 2 }, elevator: 1, combo: 0,
-    focus: 'Longer holds and your first "elevator": tensing in four controlled steps.' },
+    slow: { reps: 8, hold: 4, effort: 0.85, rest: 4 }, quick: { reps: 14, on: 0.7, off: 0.9 }, elevator: 1, combo: 0,
+    focus: 'Harder holds, faster flicks and your first "elevator": tensing in four quick steps.' },
   { level: 3, name: 'Control', position: 'Sitting upright', weeks: 'Week 5–6',
-    slow: { reps: 10, hold: 6, effort: 0.85, rest: 8 }, quick: { reps: 12, on: 1, off: 1.5 }, elevator: 2, combo: 0,
-    focus: 'Sitting makes the muscles work against more gravity. Keep the buttocks and thighs relaxed.' },
+    slow: { reps: 8, hold: 5, effort: 0.9, rest: 5 }, quick: { reps: 18, on: 0.6, off: 0.8 }, elevator: 1, combo: 1,
+    focus: 'Sitting makes the muscles work against more gravity. Buttocks and thighs stay relaxed.' },
   { level: 4, name: 'Strength', position: 'Sitting or standing', weeks: 'Week 7–8',
-    slow: { reps: 12, hold: 8, effort: 0.9, rest: 8 }, quick: { reps: 15, on: 1, off: 1.5 }, elevator: 2, combo: 0,
-    focus: 'Close to maximal holds. Quality over quantity: stop a set early if the squeeze fades.' },
+    slow: { reps: 8, hold: 6, effort: 1, rest: 6 }, quick: { reps: 22, on: 0.5, off: 0.7 }, elevator: 1, combo: 2,
+    focus: 'Maximal holds and rapid flicks. Stop a set early if the squeeze fades: a weak rep teaches nothing.' },
   { level: 5, name: 'Endurance', position: 'Standing', weeks: 'Week 9–10',
-    slow: { reps: 12, hold: 10, effort: 0.9, rest: 10 }, quick: { reps: 15, on: 1, off: 1.5 }, elevator: 1, combo: 3,
-    focus: '10-second holds standing, plus combinations: a hold that finishes with quick extra squeezes.' },
+    slow: { reps: 8, hold: 8, effort: 1, rest: 8 }, quick: { reps: 26, on: 0.5, off: 0.6 }, elevator: 1, combo: 3,
+    focus: 'Maximal 8-second holds standing, then combinations: a hold that finishes with quick extra squeezes.' },
   { level: 6, name: 'Functional', position: 'Standing, then during daily life', weeks: 'Week 11+',
-    slow: { reps: 15, hold: 10, effort: 1, rest: 10 }, quick: { reps: 20, on: 1, off: 1.5 }, elevator: 2, combo: 4,
-    focus: 'Maximal holds and fast reflexes. Also practise "the knack": squeeze just before you cough, sneeze or lift.' },
+    slow: { reps: 8, hold: 10, effort: 1, rest: 10 }, quick: { reps: 30, on: 0.4, off: 0.6 }, elevator: 1, combo: 4,
+    focus: 'Maximal holds and very fast reflexes. Also practise "the knack": squeeze just before you cough, sneeze or lift.' },
 ];
 
 /** Builds the tension timeline for a level. Ramps make the target move smoothly. */
@@ -61,38 +62,40 @@ export function buildSession(lv: Level): { segments: Segment[]; total: number } 
     seg(rampDown, effort, 0, 'Let go', phase);
   };
 
-  seg(4, 0, 0, 'Get ready · breathe normally', 'warmup');
-  for (let i = 0; i < 2; i++) { hold(3, 0.5, 'Gentle hold', 'warmup'); seg(4, 0, 0, 'Relax', 'warmup'); }
+  seg(3, 0, 0, 'Get ready · breathe normally', 'warmup');
+  hold(2, 0.5, 'Gentle hold', 'warmup', 0.7, 0.7); seg(2, 0, 0, 'Relax', 'warmup');
 
   for (let i = 0; i < lv.slow.reps; i++) {
-    hold(lv.slow.hold, lv.slow.effort, `Hold · ${i + 1}/${lv.slow.reps}`, 'slow');
-    seg(Math.max(lv.slow.rest, lv.slow.hold + 1), 0, 0, 'Relax completely', 'slow');
+    hold(lv.slow.hold, lv.slow.effort, `Hold · ${i + 1}/${lv.slow.reps}`, 'slow', 0.6, 0.6);
+    // Rest as long as the hold, never shorter: a muscle that never fully lets go gets tight, not strong.
+    seg(Math.max(lv.slow.rest, lv.slow.hold), 0, 0, 'Relax completely', 'slow');
   }
 
   for (let e = 0; e < lv.elevator; e++) {
-    seg(3, 0, 0, 'Elevator: up in four floors', 'elevator');
-    [0.25, 0.5, 0.75, 1].forEach((v, k) => { seg(0.8, k ? [0.25, 0.5, 0.75][k - 1] : 0, v, `Floor ${k + 1}`, 'elevator'); seg(1.6, v, v, `Floor ${k + 1}`, 'elevator'); });
-    [0.75, 0.5, 0.25, 0].forEach((v, k) => { seg(0.8, [1, 0.75, 0.5, 0.25][k], v, 'Down, slowly', 'elevator'); seg(1.2, v, v, 'Down, slowly', 'elevator'); });
-    seg(14, 0, 0, 'Relax completely', 'elevator');
+    seg(2, 0, 0, 'Elevator: up in four floors', 'elevator');
+    [0.25, 0.5, 0.75, 1].forEach((v, k) => { seg(0.5, k ? [0.25, 0.5, 0.75][k - 1] : 0, v, `Floor ${k + 1}`, 'elevator'); seg(1, v, v, `Floor ${k + 1}`, 'elevator'); });
+    [0.75, 0.5, 0.25, 0].forEach((v, k) => { seg(0.5, [1, 0.75, 0.5, 0.25][k], v, 'Down, with control', 'elevator'); seg(0.8, v, v, 'Down, with control', 'elevator'); });
+    seg(6, 0, 0, 'Relax completely', 'elevator');
   }
 
   for (let c = 0; c < lv.combo; c++) {
-    seg(1, 0, 0.7, 'Squeeze & lift', 'combo');
-    seg(5, 0.7, 0.7, `Hold, then pulse · ${c + 1}/${lv.combo}`, 'combo');
-    for (let p = 0; p < 3; p++) { seg(0.3, 0.7, 1, 'Pulse!', 'combo'); seg(0.6, 1, 0.7, 'Pulse!', 'combo'); }
-    seg(1, 0.7, 0, 'Let go', 'combo');
-    seg(9, 0, 0, 'Relax completely', 'combo');
+    seg(0.6, 0, 0.75, 'Squeeze & lift', 'combo');
+    seg(4, 0.75, 0.75, `Hold, then pulse · ${c + 1}/${lv.combo}`, 'combo');
+    for (let p = 0; p < 4; p++) { seg(0.25, 0.75, 1, 'Pulse!', 'combo'); seg(0.4, 1, 0.75, 'Pulse!', 'combo'); }
+    seg(0.6, 0.75, 0, 'Let go', 'combo');
+    seg(7, 0, 0, 'Relax completely', 'combo');
   }
 
-  seg(3, 0, 0, 'Quick squeezes coming', 'quick');
+  seg(2, 0, 0, 'Quick squeezes coming', 'quick');
   for (let q = 0; q < lv.quick.reps; q++) {
-    seg(0.25, 0, 1, `Quick · ${q + 1}/${lv.quick.reps}`, 'quick');
-    seg(Math.max(lv.quick.on - 0.25, 0.25), 1, 1, `Quick · ${q + 1}/${lv.quick.reps}`, 'quick');
-    seg(0.3, 1, 0, 'Release', 'quick');
-    seg(Math.max(lv.quick.off - 0.3, lv.quick.on), 0, 0, 'Release', 'quick');
+    const up = Math.min(0.2, lv.quick.on / 2);
+    seg(up, 0, 1, `Quick · ${q + 1}/${lv.quick.reps}`, 'quick');
+    seg(lv.quick.on - up, 1, 1, `Quick · ${q + 1}/${lv.quick.reps}`, 'quick');
+    seg(0.2, 1, 0, 'Release', 'quick');
+    seg(Math.max(lv.quick.off - 0.2, 0.3), 0, 0, 'Release', 'quick');
   }
 
-  seg(20, 0, 0, 'Down-train: breathe into the belly, let everything soften', 'relax');
+  seg(12, 0, 0, 'Down-train: breathe into the belly, let everything soften', 'relax');
   return { segments: segs, total: t };
 }
 

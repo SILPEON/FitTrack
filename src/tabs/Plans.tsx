@@ -133,6 +133,19 @@ export function equipmentTag(name: string, equipment: string, gear: Gear): { tex
   }
 }
 
+/** Exercise instructions: first the starting position, then the movement. */
+export function CueSteps({ cue }: { cue: string }) {
+  const [pos, move] = cue.split(' || ');
+  return (
+    <div class="cue-steps">
+      {move ? <>
+        <p><span class="cue-label">1 · Position</span>{pos}</p>
+        <p><span class="cue-label">2 · Movement</span>{move}</p>
+      </> : <p>{cue}</p>}
+    </div>
+  );
+}
+
 // ---------- Plans list ----------
 
 export function PlansScreen() {
@@ -292,7 +305,7 @@ function DayScreen({ plan, day }: { plan: Plan; day: PlanDay }) {
                 {open === k && (
                   <div class="expand-text small">
                     <div class="sub">{ex.equipment}</div>
-                    <p>{ex.cue}</p>
+                    <CueSteps cue={ex.cue} />
                     {ex.shoulder && <p class="warn"><Ico icon={Info} size={14} class="inline-ico" /> {ex.shoulder}</p>}
                   </div>
                 )}
