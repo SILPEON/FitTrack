@@ -4,7 +4,7 @@ import { db, getProfile, DEFAULT_PROFILE, type Profile, type WeightEntry } from 
 import { bmi, bmiCategory, dayKey, fmt, fmtDate, healthyRange } from '../calc';
 import { Ico } from '../icons';
 import { PhotosCard } from './Photos';
-import { Empty, LineChart, NumberInput, Page, Row, Section, Segmented, Sheet, useLive } from '../ui';
+import { Empty, LineChart, NumberInput, Page, Row, Section, Segmented, Sheet, primeKeyboard, useLive } from '../ui';
 
 type Range = '30' | '90' | '365' | 'all';
 const LOG_PREVIEW = 5;
@@ -34,7 +34,7 @@ export function WeightHome() {
         <Section>
           <Empty icon={Scale} title="No weight logged" text="Add your first weigh-in below. Your trend graph appears here." />
         </Section>
-        <div class="section"><button class="big-btn green full log-weight-btn" onClick={() => setAdding(true)}><Ico icon={Plus} size={20} />Log weight</button></div>
+        <div class="section"><button class="big-btn green full log-weight-btn" onClick={() => { primeKeyboard(); setAdding(true); }}><Ico icon={Plus} size={20} />Log weight</button></div>
         <PhotosCard />
       </>) : (
         <>
@@ -74,7 +74,7 @@ export function WeightHome() {
             </div>
           </div>
 
-          <div class="section"><button class="big-btn green full log-weight-btn" onClick={() => setAdding(true)}><Ico icon={Plus} size={20} />Log weight</button></div>
+          <div class="section"><button class="big-btn green full log-weight-btn" onClick={() => { primeKeyboard(); setAdding(true); }}><Ico icon={Plus} size={20} />Log weight</button></div>
 
           <Section title="Details">
             <Row label="BMI category" value={bmiCategory(bmi(latest.kg, profile.heightCm))} />
@@ -140,7 +140,7 @@ function AddWeight({ open, onClose, last }: { open: boolean; onClose: () => void
         </Row>
         <Row>
           <span class="row-main">Weight</span>
-          <NumberInput value={value} onChange={setKg} placeholder="0,0" class="wide" />
+          <NumberInput value={value} onChange={setKg} placeholder="0,0" class="wide" autoFocus />
           <span class="unit">kg</span>
         </Row>
       </Section>

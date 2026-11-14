@@ -134,20 +134,47 @@ export const Bar = ({ value, max, color }: { value: number; max: number; color: 
 
 // ---------- Inputs ----------
 
+/**
+ * iOS only opens the keyboard for a focus that happens inside the user's tap. Call this in the tap handler
+ * that opens a sheet: it focuses an invisible number field right away (keyboard opens), and the real field's
+ * autoFocus then takes over the focus, which iOS allows while the keyboard is already up.
+ */
+export function primeKeyboard(decimal = true) {
+  const tmp = document.createElement('input');
+  tmp.type = 'text';
+  tmp.inputMode = decimal ? 'decimal' : 'numeric';
+  tmp.setAttribute('aria-hidden', 'true');
+  tmp.style.cssText = 'position:fixed;top:0;left:0;width:1px;height:1px;opacity:0;font-size:16px;border:0;padding:0;';
+  document.body.appendChild(tmp);
+  tmp.focus();
+  setTimeout(() => tmp.remove(), 1000);
+}
+
 /** Text input for numbers that accepts a comma or a dot and keeps half-typed values like "72,". */
-export function NumberInput({ value, onChange, placeholder, decimals = true, class: cls, zeroAsEmpty }: {
+export function NumberInput({ value, onChange, placeholder, decimals = true, class: cls, zeroAsEmpty, autoFocus }: {
   value: number | null | undefined; onChange: (v: number | null) => void; placeholder?: string; decimals?: boolean; class?: string;
   /** Show 0 as an empty field so the placeholder (e.g. "bodyweight") is visible. */
   zeroAsEmpty?: boolean;
+  /** Focus and select the field when it appears (pair with primeKeyboard() in the tap handler on iOS). */
+  autoFocus?: boolean;
 }) {
   const show = (v: number | null | undefined) => (zeroAsEmpty && v === 0 ? '' : fieldText(v));
   const [text, setText] = useState(show(value));
   const focused = useRef(false);
+  const el = useRef<HTMLInputElement>(null);
   useEffect(() => {
     if (!focused.current) setText(show(value));
   }, [value]);
+  useEffect(() => {
+    if (!autoFocus || !el.current) return;
+    const input = el.current;
+    input.focus({ preventScroll: true });
+    // Select everything so typing replaces the prefilled value (iOS needs setSelectionRange after focus).
+    setTimeout(() => { try { input.setSelectionRange(0, input.value.length); } catch { /* not supported */ } }, 0);
+  }, []);
   return (
     <input
+      ref={el}
       class={`num ${cls ?? ''}`}
       type="text"
       inputMode={decimals ? 'decimal' : 'numeric'}
