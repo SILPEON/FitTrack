@@ -273,6 +273,54 @@ export const PLANS: Plan[] = [
   },
 ];
 
+// Upper-body physique plan: chest, delts, arms and abs first, legs kept strong with two shorter days.
+PLANS.push({
+  id: 'phy4', name: 'Physique: Chest, Shoulders, Arms & Abs 4× per week', short: 'Physique', perWeek: 4, level: 'Intermediate · ~45–65 min',
+  summary: 'Built for a full chest, round shoulders, bigger arms and visible abs. Two long upper days, two shorter leg-and-abs days. Still more pulling than pressing to protect your shoulders. Visible abs need low body fat: pair it with a small calorie deficit once you have built the muscle.',
+  schedule: 'Mon Upper A · Tue Lower A · Thu Upper B · Sat Lower B',
+  days: [
+    { id: 'PA', name: 'Upper A – Chest & Back', focus: 'Incline press · pull-ups · flat press · rows', minutes: 65, warmup: UPPER_WARMUP, items: [
+      i('Incline Dumbbell Press (20°)', 4, '8–15', 90, 'Upper chest is what makes the chest look full. 3 s down every rep.'),
+      i('Pull-Up (Band-Assisted if Needed)', 4, '5–12', 120),
+      i('Flat Dumbbell Press (Neutral Grip)', 3, '10–20', 90, 'Light dumbbells: go to 20 reps, then pause 2 s at the bottom.'),
+      i('One-Arm Dumbbell Row', 3, '8–12', 75),
+      i('Dumbbell Fly (Short Range)', 2, '12–15', 60),
+      i('Band Face Pull', 3, '15–20', 45),
+      i('Lateral Raise (Kettlebell, One Arm)', 3, '12–20', 45, 'Side delts give the round, wide shoulder look.'),
+      i('Ab Slider Rollout', 3, '6–15', 60),
+    ] },
+    { id: 'PL', name: 'Lower A – Legs & Abs', focus: 'Hip thrust · split squat · RDL · leg raises', minutes: 50, warmup: LOWER_WARMUP, items: [
+      i('Barbell Hip Thrust', 3, '8–15', 120),
+      i('Bulgarian Split Squat – Quad Focus', 3, '8–15', 90),
+      i('Barbell Romanian Deadlift', 3, '8–12', 120),
+      i('Lying Leg Raise', 3, '10–15', 45, 'Lower abs: the bottom rows of the six-pack.'),
+      i('Pallof Press', 2, '10–12', 45, 'Obliques: the lines at the sides of the abs.'),
+    ] },
+    { id: 'PB', name: 'Upper B – Shoulders & Arms', focus: 'Push-ups · rows · presses · laterals · arms', minutes: 65, warmup: UPPER_WARMUP, items: [
+      i('Push-Up on Handles', 3, '8–20', 90, 'Above 20 reps: feet on the bench.'),
+      i('Chest-Supported Dumbbell Row (40°)', 3, '10–15', 75),
+      i('Half-Kneeling One-Arm Dumbbell Press', 3, '8–12', 75),
+      i('Band Straight-Arm Pulldown', 3, '12–20', 45),
+      i('Lateral Raise (Kettlebell, One Arm)', 3, '12–20', 45),
+      i('Band Lateral Raise', 2, '15–25', 45, 'Finish each set with small half-reps until it burns.'),
+      i('Prone Y-Raise (40° Incline)', 2, '10–15', 45),
+      i('Incline Dumbbell Curl (60°)', 3, '10–15', 60),
+      i('Lying Dumbbell Triceps Extension', 3, '10–15', 60, 'Triceps are two thirds of the upper arm.'),
+      i('Hammer Curl', 2, '10–15', 60),
+      i('Neck Isometrics (4 Directions)', 2, '1', 45, '15–20 s per direction'),
+    ] },
+    { id: 'PM', name: 'Lower B – Legs & Abs', focus: 'Goblet squat · single-leg thrust · leg curl · core', minutes: 45, warmup: LOWER_WARMUP, items: [
+      i('Heel-Elevated Goblet Squat', 3, '10–20', 90),
+      i('Single-Leg Hip Thrust', 3, '10–20', 75),
+      i('Banded Lying Leg Curl', 2, '12–20', 60),
+      i('Ab Slider Rollout', 3, '6–15', 60),
+      i('Dead Bug', 2, '8–12', 45),
+      i('Lying Neck Flexion', 2, '15–25', 45),
+      i('Lying Neck Extension', 2, '15–25', 45),
+    ] },
+  ],
+});
+
 // The 5-day plan reuses the 4 Upper/Lower days and adds a pump day.
 {
   const ul = PLANS[1].days;
