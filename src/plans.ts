@@ -273,10 +273,10 @@ export const PLANS: Plan[] = [
   },
 ];
 
-// Upper-body physique plan: chest, delts, arms and abs first, legs kept strong with two shorter days.
+// Physique plan: chest, delts, arms and abs, plus full glute and quad volume (same leg work as Upper/Lower).
 PLANS.push({
-  id: 'phy4', name: 'Physique: Chest, Shoulders, Arms & Abs 4× per week', short: 'Physique', perWeek: 4, level: 'Intermediate · ~45–65 min',
-  summary: 'Built for a full chest, round shoulders, bigger arms and visible abs. Two long upper days, two shorter leg-and-abs days. Still more pulling than pressing to protect your shoulders. Visible abs need low body fat: pair it with a small calorie deficit once you have built the muscle.',
+  id: 'phy4', name: 'Physique + Glutes & Quads 4× per week', short: 'Physique', perWeek: 4, level: 'Intermediate · ~65 min',
+  summary: 'Built for a full chest, round shoulders, bigger arms and visible abs, without giving up your glute and quad priority: two upper days plus a glute day and a quad day, each with abs. Still more pulling than pressing to protect your shoulders. Visible abs need low body fat: pair it with a small calorie deficit once you have built the muscle.',
   schedule: 'Mon Upper A · Tue Lower A · Thu Upper B · Sat Lower B',
   days: [
     { id: 'PA', name: 'Upper A – Chest & Back', focus: 'Incline press · pull-ups · flat press · rows', minutes: 65, warmup: UPPER_WARMUP, items: [
@@ -289,12 +289,15 @@ PLANS.push({
       i('Lateral Raise (Kettlebell, One Arm)', 3, '12–20', 45, 'Side delts give the round, wide shoulder look.'),
       i('Ab Slider Rollout', 3, '6–15', 60),
     ] },
-    { id: 'PL', name: 'Lower A – Legs & Abs', focus: 'Hip thrust · split squat · RDL · leg raises', minutes: 50, warmup: LOWER_WARMUP, items: [
-      i('Barbell Hip Thrust', 3, '8–15', 120),
-      i('Bulgarian Split Squat – Quad Focus', 3, '8–15', 90),
+    { id: 'PL', name: 'Lower A – Glutes & Abs', focus: 'Hip thrust · glute split squat · RDL · leg raises', minutes: 65, warmup: LOWER_WARMUP, items: [
+      i('Barbell Hip Thrust', 4, '8–15', 120, 'Above 15 reps on all sets: switch to B-stance'),
+      i('Bulgarian Split Squat – Glute Focus', 3, '8–12', 90),
+      i('Heel-Elevated Goblet Squat', 2, '12–20', 75),
       i('Barbell Romanian Deadlift', 3, '8–12', 120),
+      i('Banded Hip Abduction', 3, '15–30', 45),
       i('Lying Leg Raise', 3, '10–15', 45, 'Lower abs: the bottom rows of the six-pack.'),
       i('Pallof Press', 2, '10–12', 45, 'Obliques: the lines at the sides of the abs.'),
+      i('Neck Isometrics (4 Directions)', 2, '1', 45, '15–20 s per direction'),
     ] },
     { id: 'PB', name: 'Upper B – Shoulders & Arms', focus: 'Push-ups · rows · presses · laterals · arms', minutes: 65, warmup: UPPER_WARMUP, items: [
       i('Push-Up on Handles', 3, '8–20', 90, 'Above 20 reps: feet on the bench.'),
@@ -309,12 +312,13 @@ PLANS.push({
       i('Hammer Curl', 2, '10–15', 60),
       i('Neck Isometrics (4 Directions)', 2, '1', 45, '15–20 s per direction'),
     ] },
-    { id: 'PM', name: 'Lower B – Legs & Abs', focus: 'Goblet squat · single-leg thrust · leg curl · core', minutes: 45, warmup: LOWER_WARMUP, items: [
-      i('Heel-Elevated Goblet Squat', 3, '10–20', 90),
+    { id: 'PM', name: 'Lower B – Quads & Abs', focus: 'Goblet squat · quad split squat · single-leg thrust · rollouts', minutes: 65, warmup: LOWER_WARMUP, items: [
+      i('Heel-Elevated Goblet Squat', 4, '10–20', 90),
+      i('Bulgarian Split Squat – Quad Focus', 4, '8–15', 90),
       i('Single-Leg Hip Thrust', 3, '10–20', 75),
+      i('Sissy Squat (Wall-Assisted)', 2, '8–15', 60),
       i('Banded Lying Leg Curl', 2, '12–20', 60),
       i('Ab Slider Rollout', 3, '6–15', 60),
-      i('Dead Bug', 2, '8–12', 45),
       i('Lying Neck Flexion', 2, '15–25', 45),
       i('Lying Neck Extension', 2, '15–25', 45),
     ] },
